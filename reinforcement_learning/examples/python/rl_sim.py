@@ -40,10 +40,10 @@ class rl_sim:
         self._rl_client = rl_client.live_model(self.config, my_error_callback())
         self._rl_client.init()
 
-        tp1 = {'HerbGarden': 0.3, "MachineLearning": 0.2 }
-        tp2 = {'HerbGarden': 0.1, "MachineLearning": 0.4 }
+        tp1 = {'HerbGarden': 0.1, "Soccer": 0.01, "MachineLearning": 0.4}
+        tp2 = {'HerbGarden': 0.2, "Soccer": 0.5, "MachineLearning": 0.01}
 
-        self._actions = ['HerbGarden', 'MachineLearning']
+        self._actions = ['HerbGarden', 'Soccer', 'MachineLearning']
         self._people = [
             person('rnc', 'engineering', 'hiking', 'spock', tp1),
             person('mk', 'psychology', 'kids', '7of9', tp2)]
@@ -64,6 +64,9 @@ class rl_sim:
                 action_features = '"_multi":[' + ','.join('{"a":{"topic":"'+action+'"}}' for action in self._actions) + ']'
                 context = '{' + shared_features + ',' + action_features + '}'
 
+                if round <= 10:
+                    print('Round: {}, Context: {}'.format(round,context))
+
                 model_id, chosen_action_id, actions_probabilities, event_id = self._rl_client.choose_rank(context)
 
                 stats[person._id][chosen_action_id][1] += 1
@@ -75,9 +78,11 @@ class rl_sim:
                     ctr[0] += 1
                     stats[person._id][chosen_action_id][0] += 1
 
-                print('Round: {}, ctr: {:.1%}'.format(round, ctr[0]/ctr[1]), stats)
+                if round % 10000 == 0:
+                    print('R: {}, ctr: {:.1%}'.format(round, ctr[0]/ctr[1]), stats, model_id)
+                    ctr = [0,0]
 
-                time.sleep(0.1)
+                #time.sleep(0.01)
             except Exception as e:
                 print(e)
                 time.sleep(2)
