@@ -1,6 +1,6 @@
 import numpy as np
 from vowpalwabbit.pyvw import vw
-import multiprocessing
+import multiprocessing, os
 
 class Command:
     def __init__(self, base, cb_type=None, marginal_list=None, ignore_list=None, interaction_list=None, regularization=None, learning_rate=None, power_t=None, clone_from=None):
@@ -121,6 +121,10 @@ def run_experiment(args_tuple):
             prob = max(prob, 0.2)
         elif recorded_prob_type == 4:
             prob = max(prob, 0.75)
+        elif recorded_prob_type == 6:
+            prob = max(prob, 0.9)
+        elif recorded_prob_type == 7:
+            prob = .9
         
         if zero_one_cost == 1:
             cost = 0.0 if clicked else 1.0
@@ -168,16 +172,20 @@ def result_writer(results, fp):
 
 if __name__ == '__main__':
 
-    fp = r'/mnt/d/data/vw-python-bug/sim_code_good_v4_p0.04_2users_totalClip.txt'
+    # fp = r'/mnt/d/data/vw-python-bug/sim_code_good_v4_p0.04_2users_totalClip.txt'
+    fp = r'/mnt/c/Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/sim_code_good_v4_p0.04_2users_totalClip.txt'
 
-    l = ['\t'.join(x.split('\t')[:9]) for i,x in enumerate(open(fp)) if i > 0]
-    print(len(l))
-    
-    already_done = set(l)
-    print(len(already_done))
+    if os.path.isfile(fp):
+        l = ['\t'.join(x.split('\t')[:9]) for i,x in enumerate(open(fp)) if i > 0]
+        print(len(l))
+        
+        already_done = set(l)
+        print(len(already_done))
+    else:
+        already_done = set()
     
 
-    recorded_prob_types = [0, 1, 2, 3, 4]
+    recorded_prob_types = [0, 1, 2, 3, 4, 6, 7]
     zero_one_costs = [1, 0]
     learning_rates = [1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 0.005, 1e-2, 1e-1, 0.5, 1, 10]
     regularizations = [0]
@@ -186,7 +194,7 @@ if __name__ == '__main__':
     
     # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
     command_list = []
-    for rnd_seed in range(400):
+    for rnd_seed in range(406):
         for zero_one_cost in zero_one_costs:
             for recorded_prob_type in recorded_prob_types:
                 for regularization in regularizations:
@@ -201,33 +209,33 @@ if __name__ == '__main__':
                                     # print(s)
                                     # raw_input()
     
-                                # if len(command_list) == 450:
-                                    # print('Num of sim:',len(command_list))
-                                    # run_experiment_set(command_list, 45, fp)
-                                    # command_list = []
+                                if len(command_list) == 900:
+                                    print('Num of sim:',len(command_list))
+                                    run_experiment_set(command_list, 45, fp)
+                                    command_list = []
     print('Num of sim:',len(command_list))
     run_experiment_set(command_list, 45, fp)
     
     
-    # rnd_seed = 347
-    # while True:
-        # command_list = []
-        # for zero_one_cost in zero_one_costs:
-            # for recorded_prob_type in recorded_prob_types:
-                # for regularization in regularizations:
-                    # for cb_type in cb_types:
-                        # for power_t in power_t_rates:
-                            # for learning_rate in learning_rates:
-                                # command = Command('--cb_explore 2 --epsilon 0.05', regularization=regularization, learning_rate=learning_rate, power_t=power_t, cb_type=cb_type)
+    rnd_seed = 406
+    while True:
+        command_list = []
+        for zero_one_cost in zero_one_costs:
+            for recorded_prob_type in recorded_prob_types:
+                for regularization in regularizations:
+                    for cb_type in cb_types:
+                        for power_t in power_t_rates:
+                            for learning_rate in learning_rates:
+                                command = Command('--cb_explore 2 --epsilon 0.05', regularization=regularization, learning_rate=learning_rate, power_t=power_t, cb_type=cb_type)
                                 
-                                # # s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
+                                # s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
                                 
-                                # # if s not in already_done:
-                                # command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
+                                # if s not in already_done:
+                                command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
     
-        # print('Num of sim:',len(command_list))
-        # run_experiment_set(command_list, 45, fp)
+        print('Num of sim:',len(command_list))
+        run_experiment_set(command_list, 45, fp)
         
-        # rnd_seed += 1
+        rnd_seed += 1
                         
                   
