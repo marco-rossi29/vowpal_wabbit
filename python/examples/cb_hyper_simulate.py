@@ -156,9 +156,10 @@ def run_experiment(args_tuple):
     return s
     
 def run_experiment_set(command_list, n_proc, fp):
+    print('Num of sim:',len(command_list))
     # Run the experiments in parallel using n_proc processes
     p = multiprocessing.Pool(n_proc)
-    results = p.map(run_experiment, command_list)
+    results = p.map(run_experiment, command_list, chunksize=1)
     p.close()
     p.join()
     del p
@@ -210,10 +211,8 @@ if __name__ == '__main__':
                                     # raw_input()
     
                                 if len(command_list) == 900:
-                                    print('Num of sim:',len(command_list))
                                     run_experiment_set(command_list, 45, fp)
                                     command_list = []
-    print('Num of sim:',len(command_list))
     run_experiment_set(command_list, 45, fp)
     
     
@@ -233,7 +232,6 @@ if __name__ == '__main__':
                                 # if s not in already_done:
                                 command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
     
-        print('Num of sim:',len(command_list))
         run_experiment_set(command_list, 45, fp)
         
         rnd_seed += 1
