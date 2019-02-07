@@ -1,6 +1,6 @@
 import numpy as np
 from vowpalwabbit.pyvw import vw
-import multiprocessing, os
+import multiprocessing, os, sys
 
 class Command:
     def __init__(self, base, cb_type=None, marginal_list=None, ignore_list=None, interaction_list=None, regularization=None, learning_rate=None, power_t=None, clone_from=None):
@@ -196,6 +196,7 @@ if __name__ == '__main__':
     # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
     command_list = []
     for rnd_seed in range(406):
+    skipped = 0
         for zero_one_cost in zero_one_costs:
             for recorded_prob_type in recorded_prob_types:
                 for regularization in regularizations:
@@ -207,12 +208,16 @@ if __name__ == '__main__':
                                 s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
                                 if s not in already_done:
                                     command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
+                                else:
+                                    skipped += 1
                                     # print(s)
                                     # raw_input()
     
                                 if len(command_list) == 900:
                                     run_experiment_set(command_list, 45, fp)
                                     command_list = []
+    print(skipped)
+    # sys.exit()
     run_experiment_set(command_list, 45, fp)
     
     
