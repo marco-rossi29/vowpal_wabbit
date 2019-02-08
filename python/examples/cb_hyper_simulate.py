@@ -188,9 +188,9 @@ if __name__ == '__main__':
 
     recorded_prob_types = [0, 1, 2, 3, 4, 6]
     zero_one_costs = [1, 0]
-    learning_rates = [1e-3, 0.0025, 0.005, 0.0075, 1e-2, 5e-2, 1e-1]
+    learning_rates = [1e-3, 0.005, 7.5e-3, 1e-2, 2.5e-2, 5e-2, 7.5e-2, 1e-1]
     regularizations = [0]
-    power_t_rates = [0.1, 0.5]
+    power_t_rates = [0.5]
     cb_types = ['ips', 'dr', 'dm']
     
     # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
