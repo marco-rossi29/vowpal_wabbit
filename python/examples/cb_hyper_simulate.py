@@ -186,17 +186,17 @@ if __name__ == '__main__':
         already_done = set()
     
 
-    recorded_prob_types = [0, 1, 2, 3, 4, 6]
+    recorded_prob_types = [0, 1, 4, 6]
     zero_one_costs = [1, 0]
-    learning_rates = [1e-3, 0.005, 7.5e-3, 1e-2, 2.5e-2, 5e-2, 7.5e-2, 1e-1]
+    learning_rates = [1e-3, 2.5e-3, 5e-3, 7.5e-3, 1e-2, 2.5e-2, 5e-2, 7.5e-2, 1e-1, 0.5]
     regularizations = [0]
-    power_t_rates = [0.5]
+    power_t_rates = [0.5, 0.1]
     cb_types = ['ips', 'dr', 'dm']
     
     # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
     command_list = []
     skipped = 0
-    for rnd_seed in range(448):
+    for rnd_seed in range(648):
         for zero_one_cost in zero_one_costs:
             for recorded_prob_type in recorded_prob_types:
                 for regularization in regularizations:
@@ -213,15 +213,15 @@ if __name__ == '__main__':
                                     # print(s)
                                     # raw_input()
     
-                                if len(command_list) == 360:
+                                if len(command_list) == 450:
                                     run_experiment_set(command_list, 45, fp)
                                     command_list = []
-    print(skipped)
+    print(len(command_list),skipped)
     # sys.exit()
     run_experiment_set(command_list, 45, fp)
     
     
-    rnd_seed = 448
+    rnd_seed = 648
     while True:
         command_list = []
         for zero_one_cost in zero_one_costs:
