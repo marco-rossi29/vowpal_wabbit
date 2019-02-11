@@ -125,6 +125,16 @@ def run_experiment(args_tuple):
             prob = max(prob, 0.9)
         elif recorded_prob_type == 7:
             prob = .9
+        elif recorded_prob_type == 5:
+            if prob > 0.5:
+                prob = 0.6
+            else:
+                prob = 0.4
+        elif recorded_prob_type == 8:
+            if prob > 0.5:
+                prob = 0.8
+            else:
+                prob = 0.2
         
         if zero_one_cost == 1:
             cost = 0.0 if clicked else 1.0
@@ -186,17 +196,17 @@ if __name__ == '__main__':
         already_done = set()
     
 
-    recorded_prob_types = [0, 1, 4, 6]
+    recorded_prob_types = [0, 1, 4, 5, 6, 8]
     zero_one_costs = [1, 0]
     learning_rates = [1e-3, 2.5e-3, 5e-3, 7.5e-3, 1e-2, 2.5e-2, 5e-2, 7.5e-2, 1e-1, 0.5]
     regularizations = [0]
-    power_t_rates = [0.5, 0.1]
+    power_t_rates = [0.5]
     cb_types = ['ips', 'dr', 'dm']
     
     # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
     command_list = []
     skipped = 0
-    for rnd_seed in range(648):
+    for rnd_seed in range(1002):
         for zero_one_cost in zero_one_costs:
             for recorded_prob_type in recorded_prob_types:
                 for regularization in regularizations:
@@ -221,7 +231,7 @@ if __name__ == '__main__':
     run_experiment_set(command_list, 45, fp)
     
     
-    rnd_seed = 648
+    rnd_seed = 1002
     while True:
         command_list = []
         for zero_one_cost in zero_one_costs:
