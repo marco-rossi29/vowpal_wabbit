@@ -135,6 +135,8 @@ def run_experiment(args_tuple):
                 prob = 0.8
             else:
                 prob = 0.2
+        elif recorded_prob_type == 9:
+            prob = min(prob, 0.5)
         
         if zero_one_cost == 1:
             cost = 0.0 if clicked else 1.0
@@ -196,7 +198,7 @@ if __name__ == '__main__':
         already_done = set()
     
 
-    recorded_prob_types = [0, 1, 4, 5, 6, 8]
+    recorded_prob_types = [0, 1, 4, 5, 6, 8, 9]
     zero_one_costs = [1, 0]
     learning_rates = [1e-3, 2.5e-3, 5e-3, 7.5e-3, 1e-2, 2.5e-2, 5e-2, 7.5e-2, 1e-1, 0.5]
     regularizations = [0]
