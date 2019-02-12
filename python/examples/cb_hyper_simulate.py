@@ -322,8 +322,18 @@ if __name__ == '__main__':
                         
 '''
 
+
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+
+def percentile(n):
+    def percentile_(x):
+        return np.percentile(x, n)
+    percentile_.__name__ = 'per_%s' % n
+    return percentile_
+
+plt.rcParams.update({'font.size': 22})
 
 fp = r'c:\Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/sim_code_good_v4_p0.04_2users_totalClip.txt'
 
@@ -335,6 +345,8 @@ df.groupby(by=cols)['CTR Math'].quantile([.1]).sort_values(ascending=False)
 
 print(df.groupby(by=cols)['CTR Math'].mean().sort_values(ascending=False).head(30).to_string())
 
+print(df.groupby(by=cols)['CTR Math'].agg(['mean', 'median', 'min', 'max']).sort_values(by='median', ascending=False).head(30).to_string())
+
 print(df.groupby(by=cols)['Seed'].max().to_string())
 
 for i,x in df.groupby(by=cols):
@@ -344,12 +356,14 @@ for i,x in df.groupby(by=cols):
 
 df[((df.Forced == 0) | (df.Forced == 1) | (df.Forced == 6)) & ((df.LearningRate >= 0.01) & (df.LearningRate <= 0.1)) & (df.Power == 0.5)].boxplot(by=['Cb_type','Forced','Cost_0_1'], column='CTR Math')
 
-inner_cols = ['Cost_0_1','Cb_type','Forced']
+inner_cols = ['Cost_0_1','Forced']
 fig, axes = plt.subplots(nrows=2, ncols=3)
 for i,lr in enumerate([0.01, 0.025, 0.05, 0.075, 0.1, 0.5]):
-    x = df[((df.Forced == 0) | (df.Forced == 1) | (df.Forced == 6)) & (df.LearningRate == lr) & (df.Power == 0.5) & (df.Cb_type != 'dm')]
+    x = df[(df.LearningRate == lr) & (df.Power == 0.5) & (df.Cb_type == 'dr')]
     x.boxplot(by=inner_cols, column=['CTR Math'], ax=axes[int(i/3),i%3], rot=90)
     axes[int(i/3),i%3].set_title('lr = '+str(lr))
+    axes[int(i/3),i%3].set_xlabel('')
+    
     z = [y['CTR Math'].mean() for _,y in x.groupby(by=inner_cols)]
     axes[int(i/3),i%3].scatter(list(range(1,len(z)+1)),z)
 plt.show()
@@ -357,7 +371,7 @@ plt.show()
 inner_cols = ['Cb_type', 'LearningRate']
 fig, axes = plt.subplots(nrows=2, ncols=3)
 for i,cost in enumerate([0, 1]):
-    for j,forced in enumerate([0, 1 ,6]):
+    for j,forced in enumerate([0, 1, 6, 5, 8]):
         x = df[(df.Forced == forced) & (df.Cost_0_1 == cost) & (df.LearningRate >= 0.01) & (df.LearningRate <= 0.5) & (df.Power == 0.5) & (df.Cb_type != 'dm')]
         x.boxplot(by=inner_cols, column=['CTR Math'], ax=axes[i, j], rot=90)
         axes[i, j].set_title('Cost_0_1 = '+str(cost)+' Forced = '+str(forced))
@@ -367,17 +381,54 @@ for i,cost in enumerate([0, 1]):
         axes[i, j].scatter(list(range(1,len(z)+1)),z)
 plt.show()
 
-inner_cols = ['LearningRate','Cb_type']
+inner_cols = ['LearningRate']
 fig, axes = plt.subplots(nrows=2, ncols=3)
 for i,cost in enumerate([0, 1]):
-    for j,forced in enumerate([0, 1 ,6]):
-        x = df[(df.Forced == forced) & (df.Cost_0_1 == cost) & (df.LearningRate >= 0.001) & (df.LearningRate <= 0.5) & (df.Power == 0.5) & (df.Cb_type != 'dm')]
+    for j,forced in enumerate([0, 1, 2, 3, 8]):
+        x = df[(df.Forced == forced) & (df.Cost_0_1 == cost) & (df.LearningRate >= 0.001) & (df.LearningRate <= 0.5) & (df.Power == 0.5) & (df.Cb_type == 'dr')]
         x.boxplot(by=inner_cols, column=['CTR Math'], ax=axes[i, j], rot=90)
         axes[i, j].set_title('Cost_0_1 = '+str(cost)+' Forced = '+str(forced))
         axes[i, j].set_xlabel('')
         
         z = [y['CTR Math'].mean() for _,y in x.groupby(by=inner_cols)]
         axes[i, j].scatter(list(range(1,len(z)+1)),z)
+plt.show()
+
+
+forced_vec = [0, 1]#, 2, 3, 4, 5, 6, 8, 9, 10]
+inner_cols = ['LearningRate']
+fig, axes = plt.subplots(nrows=2, ncols=len(forced_vec), sharey=True)
+for i,cost in enumerate([0, 1]):
+    for j,forced in enumerate(forced_vec):
+        x = df[(df.Forced == forced) & (df.Cost_0_1 == cost) & (df.LearningRate >= 0.0001) & (df.LearningRate <= 0.5) & (df.Power == 0.5) & (df.Cb_type == 'dr')]
+        x.boxplot(by=inner_cols, column=['CTR Math'], ax=axes[i, j], rot=90)
+        axes[i, j].set_title('Cost_0_1 = '+str(cost) + ' - Forced = '+str(forced))
+        axes[i, j].set_xlabel('')
+        
+        z = [y['CTR Math'].mean() for _,y in x.groupby(by=inner_cols)]
+        axes[i, j].scatter(list(range(1,len(z)+1)),z)
+#plt.tight_layout()
+plt.show()
+
+inner_cols = ['LearningRate', 'Forced']
+fig, axes = plt.subplots(nrows=2, ncols=1)
+for i,cost in enumerate([0, 1]):
+    x = df[((df.Forced == 0) | (df.Forced == 1)) & (df.Cost_0_1 == cost) & (df.LearningRate >= 0.001) & (df.LearningRate <= 1) & (df.Power == 0.5) & (df.Cb_type == 'dr')]
+    x.boxplot(by=inner_cols, column=['CTR Math'], ax=axes[i], rot=90)
+    axes[i].set_title('Cost_0_1 = '+str(cost))
+    axes[i].set_xlabel('')
+    
+    z = [y['CTR Math'].mean() for _,y in x.groupby(by=inner_cols)]
+    axes[i].scatter(list(range(1,len(z)+1)),z)
+plt.show()
+
+------------------------------------------------------------------------------------------------------------------
+
+x = df[(df.Cost_0_1 == 1) & (df.LearningRate == 0.5) & (df.Power == 0.5) & (df.Cb_type == 'dr')]
+x.boxplot(by='Forced', column=['GoodActions'])
+    
+z = [y['GoodActions'].mean() for _,y in x.groupby(by='Forced')]
+plt.scatter(list(range(1,len(z)+1)),z)
 plt.show()
 
 '''
