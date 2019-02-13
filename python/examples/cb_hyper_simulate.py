@@ -212,61 +212,110 @@ if __name__ == '__main__':
     else:
         already_done = set()
     
-
-    recorded_prob_types = [0, 1, 4, 5, 6, 10, 11, 12]
-    zero_one_costs = [1, 0]
-    learning_rates = [1e-2, 2.5e-2, 5e-2, 7.5e-2]
-    regularizations = [0]
-    power_t_rates = [0.5]
-    cb_types = ['ips', 'dr', 'dm']
-    
-    # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
-    command_list = []
-    skipped = 0
-    for rnd_seed in range(1002):
-        for zero_one_cost in zero_one_costs:
-            for recorded_prob_type in recorded_prob_types:
-                for regularization in regularizations:
-                    for cb_type in cb_types:
-                        for power_t in power_t_rates:
-                            for learning_rate in learning_rates:
-                                command = Command('--cb_explore 2 --epsilon 0.05', regularization=regularization, learning_rate=learning_rate, power_t=power_t, cb_type=cb_type)
-                                
-                                s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
-                                if s not in already_done:
-                                    command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
-                                else:
-                                    skipped += 1
-                                    # print(s)
-                                    # raw_input()
-    
-                                if len(command_list) == 450:
-                                    run_experiment_set(command_list, 45, fp)
-                                    command_list = []
-    print(len(command_list),skipped)
-    # sys.exit()
-    run_experiment_set(command_list, 45, fp)
-    
-    
-    rnd_seed = 1002
-    while True:
+    fpi = r'/mnt/c/Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/cb_hyper_simulate_input.csv'
+    if fpi:
+        l = [x.strip() for x in open(fpi)][1:]
+        
+        skipped = 0
         command_list = []
-        for zero_one_cost in zero_one_costs:
-            for recorded_prob_type in recorded_prob_types:
-                for regularization in regularizations:
-                    for cb_type in cb_types:
-                        for power_t in power_t_rates:
-                            for learning_rate in learning_rates:
-                                command = Command('--cb_explore 2 --epsilon 0.05', regularization=regularization, learning_rate=learning_rate, power_t=power_t, cb_type=cb_type)
-                                
-                                # s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
-                                
-                                # if s not in already_done:
-                                command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
-    
+        for rnd_seed in range(1138):
+            for x in l:
+                recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')[:5]
+                power_t = 0 if power_t == '0.0' else float(power_t)
+                lr = float(lr)
+                zero_one_cost = int(zero_one_cost)
+                recorded_prob_type = int(recorded_prob_type)
+            
+                command = Command('--cb_explore 2 --epsilon 0.05', regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
+
+                s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
+                if s not in already_done:
+                    command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
+                else:
+                    skipped += 1
+                    # print(s)
+                    # raw_input()
+
+                if len(command_list) == 450:
+                    run_experiment_set(command_list, 45, fp)
+                    command_list = []
+        print(len(command_list),skipped)
+        # print(command_list)
+        # sys.exit()
         run_experiment_set(command_list, 45, fp)
         
-        rnd_seed += 1
+        rnd_seed = 1138
+        while True:
+            command_list = []
+            for x in l:
+                recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')
+                power_t = 0 if power_t == '0.0' else float(power_t)
+                lr = float(lr)
+                zero_one_cost = int(zero_one_cost)
+                recorded_prob_type = int(recorded_prob_type)
+            
+                command = Command('--cb_explore 2 --epsilon 0.05', regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
+                command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
+        
+            run_experiment_set(command_list, 45, fp)
+            
+            rnd_seed += 1
+
+    else:
+        recorded_prob_types = [0, 1, 4, 5, 6, 10, 11, 12]
+        zero_one_costs = [1, 0]
+        learning_rates = [1e-2, 2.5e-2, 5e-2, 7.5e-2]
+        regularizations = [0]
+        power_t_rates = [0.5]
+        cb_types = ['ips', 'dr', 'dm']
+        
+        # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
+        command_list = []
+        skipped = 0
+        for rnd_seed in range(1002):
+            for zero_one_cost in zero_one_costs:
+                for recorded_prob_type in recorded_prob_types:
+                    for regularization in regularizations:
+                        for cb_type in cb_types:
+                            for power_t in power_t_rates:
+                                for learning_rate in learning_rates:
+                                    command = Command('--cb_explore 2 --epsilon 0.05', regularization=regularization, learning_rate=learning_rate, power_t=power_t, cb_type=cb_type)
+                                    
+                                    s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
+                                    if s not in already_done:
+                                        command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
+                                    else:
+                                        skipped += 1
+                                        # print(s)
+                                        # raw_input()
+        
+                                    if len(command_list) == 450:
+                                        run_experiment_set(command_list, 45, fp)
+                                        command_list = []
+        print(len(command_list),skipped)
+        # sys.exit()
+        run_experiment_set(command_list, 45, fp)
+        
+        
+        rnd_seed = 1002
+        while True:
+            command_list = []
+            for zero_one_cost in zero_one_costs:
+                for recorded_prob_type in recorded_prob_types:
+                    for regularization in regularizations:
+                        for cb_type in cb_types:
+                            for power_t in power_t_rates:
+                                for learning_rate in learning_rates:
+                                    command = Command('--cb_explore 2 --epsilon 0.05', regularization=regularization, learning_rate=learning_rate, power_t=power_t, cb_type=cb_type)
+                                    
+                                    # s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
+                                    
+                                    # if s not in already_done:
+                                    command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
+        
+            run_experiment_set(command_list, 45, fp)
+            
+            rnd_seed += 1
                         
 '''
 
