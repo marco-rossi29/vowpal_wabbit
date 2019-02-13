@@ -395,12 +395,12 @@ for i,cost in enumerate([0, 1]):
 plt.show()
 
 
-forced_vec = [0, 1]#, 2, 3, 4, 5, 6, 8, 9, 10]
+forced_vec = [0, 1, 6, 11, 4]#, 2, 3, 4, 5, 6, 8, 9, 10]
 inner_cols = ['LearningRate']
-fig, axes = plt.subplots(nrows=2, ncols=len(forced_vec), sharey=True)
+fig, axes = plt.subplots(nrows=2, ncols=len(forced_vec), sharey=True, sharex=True)
 for i,cost in enumerate([0, 1]):
     for j,forced in enumerate(forced_vec):
-        x = df[(df.Forced == forced) & (df.Cost_0_1 == cost) & (df.LearningRate >= 0.0001) & (df.LearningRate <= 0.5) & (df.Power == 0.5) & (df.Cb_type == 'dr')]
+        x = df[(df.Forced == forced) & (df.Cost_0_1 == cost) & (df.LearningRate >= 0.001) & (df.LearningRate <= 0.5) & (df.Power == 0.5) & (df.Cb_type == 'dr')]
         x.boxplot(by=inner_cols, column=['CTR Math'], ax=axes[i, j], rot=90)
         axes[i, j].set_title('Cost_0_1 = '+str(cost) + ' - Forced = '+str(forced))
         axes[i, j].set_xlabel('')
@@ -424,11 +424,14 @@ plt.show()
 
 ------------------------------------------------------------------------------------------------------------------
 
-x = df[(df.Cost_0_1 == 1) & (df.LearningRate == 0.5) & (df.Power == 0.5) & (df.Cb_type == 'dr')]
+x = df[(df.Cost_0_1 == 1) & (df.LearningRate == 0.025) & (df.Power == 0.5) & (df.Cb_type == 'dr')]
+x = x.replace({"Forced":{0:'01-Original',1:'03-[0.5,0.5]', 2:'10-max(p,0.5)', 3:'09-max(p,0.2)', 4:'11-max(p,0.75)', 6: '12-max(p,0.9)', 9:'02-min(p,0.5)', 5:'08-[0.4,0.6]', 8:'06-[0.2,0.8]', 10:'07-[0.45,0.55]', 11:'05-[0.4,0.5]', 12:'04-[0.5,0.6]'}})
 x.boxplot(by='Forced', column=['GoodActions'])
     
 z = [y['GoodActions'].mean() for _,y in x.groupby(by='Forced')]
 plt.scatter(list(range(1,len(z)+1)),z)
 plt.show()
+
+x.groupby('Forced')['GoodActions'].plot(kind='hist', density=True, cumulative=True, bins=100, histtype='step')
 
 '''
