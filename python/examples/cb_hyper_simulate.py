@@ -184,13 +184,14 @@ def run_experiment(args_tuple):
     
 def run_experiment_set(command_list, n_proc, fp):
     print('Num of sim:',len(command_list))
-    # Run the experiments in parallel using n_proc processes
-    p = multiprocessing.Pool(n_proc)
-    results = p.map(run_experiment, command_list, chunksize=1)
-    p.close()
-    p.join()
-    del p
-    result_writer(results, fp)
+    if len(command_list) > 0:
+        # Run the experiments in parallel using n_proc processes
+        p = multiprocessing.Pool(n_proc)
+        results = p.map(run_experiment, command_list, chunksize=1)
+        p.close()
+        p.join()
+        del p
+        result_writer(results, fp)
 
 def result_writer(results, fp):
     with open(fp, 'a') as experiment_file:
@@ -213,7 +214,7 @@ if __name__ == '__main__':
         already_done = set()
     
     fpi = r'/mnt/c/Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/cb_hyper_simulate_input.csv'
-    if fpi:
+    if False:
         l = [x.strip() for x in open(fpi)][1:]
         
         skipped = 0
@@ -262,17 +263,17 @@ if __name__ == '__main__':
             rnd_seed += 1
 
     else:
-        recorded_prob_types = [0, 1, 4, 5, 6, 10, 11, 12]
-        zero_one_costs = [1, 0]
-        learning_rates = [1e-2, 2.5e-2, 5e-2, 7.5e-2]
+        recorded_prob_types = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        zero_one_costs = [1]
+        learning_rates = [2.5e-2]
         regularizations = [0]
         power_t_rates = [0.5]
-        cb_types = ['ips', 'dr', 'dm']
+        cb_types = ['dr']
         
         # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         command_list = []
         skipped = 0
-        for rnd_seed in range(1002):
+        for rnd_seed in range(1235):
             for zero_one_cost in zero_one_costs:
                 for recorded_prob_type in recorded_prob_types:
                     for regularization in regularizations:
@@ -296,10 +297,10 @@ if __name__ == '__main__':
         # sys.exit()
         run_experiment_set(command_list, 45, fp)
         
-        
-        rnd_seed = 1002
+        print('Start while loop...')
+        rnd_seed = 1235
+        command_list = []
         while True:
-            command_list = []
             for zero_one_cost in zero_one_costs:
                 for recorded_prob_type in recorded_prob_types:
                     for regularization in regularizations:
@@ -312,8 +313,10 @@ if __name__ == '__main__':
                                     
                                     # if s not in already_done:
                                     command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
-        
-            run_experiment_set(command_list, 45, fp)
+                                    
+                                    if len(command_list) == 450:
+                                        run_experiment_set(command_list, 45, fp)
+                                        command_list = []
             
             rnd_seed += 1
                         
