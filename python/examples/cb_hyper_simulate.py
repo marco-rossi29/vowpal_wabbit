@@ -214,12 +214,12 @@ if __name__ == '__main__':
         already_done = set()
     
     fpi = r'/mnt/c/Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/cb_hyper_simulate_input.csv'
-    if False:
+    if True:
         l = [x.strip() for x in open(fpi)][1:]
         
         skipped = 0
         command_list = []
-        for rnd_seed in range(1138):
+        for rnd_seed in range(3971):
             for x in l:
                 recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')[:5]
                 power_t = 0 if power_t == '0.0' else float(power_t)
@@ -245,27 +245,27 @@ if __name__ == '__main__':
         # sys.exit()
         run_experiment_set(command_list, 45, fp)
         
-        rnd_seed = 1138
-        while True:
-            command_list = []
-            for x in l:
-                recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')
-                power_t = 0 if power_t == '0.0' else float(power_t)
-                lr = float(lr)
-                zero_one_cost = int(zero_one_cost)
-                recorded_prob_type = int(recorded_prob_type)
+        # rnd_seed = 3971
+        # while True:
+            # command_list = []
+            # for x in l:
+                # recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')
+                # power_t = 0 if power_t == '0.0' else float(power_t)
+                # lr = float(lr)
+                # zero_one_cost = int(zero_one_cost)
+                # recorded_prob_type = int(recorded_prob_type)
             
-                command = Command('--cb_explore 2 --epsilon 0.05', regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
-                command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
+                # command = Command('--cb_explore 2 --epsilon 0.05', regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
+                # command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
         
-            run_experiment_set(command_list, 45, fp)
+            # run_experiment_set(command_list, 45, fp)
             
-            rnd_seed += 1
+            # rnd_seed += 1
 
-    else:
+        # else:
         recorded_prob_types = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-        zero_one_costs = [1]
-        learning_rates = [2.5e-2]
+        zero_one_costs = [1, 0]
+        learning_rates = [2.5e-2, 0.5]
         regularizations = [0]
         power_t_rates = [0.5]
         cb_types = ['dr']
@@ -273,7 +273,7 @@ if __name__ == '__main__':
         # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         command_list = []
         skipped = 0
-        for rnd_seed in range(1235):
+        for rnd_seed in range(3971):
             for zero_one_cost in zero_one_costs:
                 for recorded_prob_type in recorded_prob_types:
                     for regularization in regularizations:
@@ -298,7 +298,7 @@ if __name__ == '__main__':
         run_experiment_set(command_list, 45, fp)
         
         print('Start while loop...')
-        rnd_seed = 1235
+        rnd_seed = 3971
         command_list = []
         while True:
             for zero_one_cost in zero_one_costs:
@@ -422,21 +422,34 @@ for i,cost in enumerate([0, 1]):
     axes[i].scatter(list(range(1,len(z)+1)),z)
 plt.show()
 
-------------------------------------------------------------------------------------------------------------------
-
-x = df[(df.Cost_0_1 == 1) & (df.LearningRate == 0.025) & (df.Power == 0.5) & (df.Cb_type == 'dr')]
-#x = x.replace({"Forced":{0:'01-Original',1:'03-[0.5,0.5]', 2:'10-max(p,0.5)', 3:'09-max(p,0.2)', 4:'11-max(p,0.75)', 6: '12-max(p,0.9)', 9:'02-min(p,0.5)', 5:'08-[0.4,0.6]', 7:'06-[0.9,0.9]', 8:'06-[0.2,0.8]', 10:'07-[0.45,0.55]', 11:'05-[0.4,0.5]', 12:'04-[0.5,0.6]'}})
-x = x.replace({"Forced":{0:'Original',1:'[0.5,0.5]', 2:'max(p,0.5)', 3:'max(p,0.2)', 4:'max(p,0.75)', 6: 'max(p,0.9)', 9:'min(p,0.5)', 5:'[0.4,0.6]', 7:'[0.9,0.9]', 8:'[0.2,0.8]', 10:'[0.45,0.55]', 11:'[0.4,0.5]', 12:'[0.5,0.6]'}})
-
-x.boxplot(by='Forced', column=['GoodActions'])
-    
-z = [y['GoodActions'].mean() for _,y in x.groupby(by='Forced')]
-plt.scatter(list(range(1,len(z)+1)),z)
-
-print(x.groupby(by=cols)['GoodActions'].agg(['mean', 'min', percentile(5), percentile(10), percentile(25), 'median', percentile(75), percentile(90), percentile(95), 'max', 'count']).sort_values(by='mean', ascending=False).head(50).to_string())
-
-plt.show()
-
 x.groupby('Forced')['GoodActions'].plot(kind='hist', density=True, cumulative=True, bins=100, histtype='step')
+
+print(x.groupby(by=cols)['GoodActions'].agg(['mean', 'min', percentile(5), percentile(10), percentile(25), 'median', percentile(75), percentile(90), percentile(95), 'max', 'count']).sort_values(by='min', ascending=False).head(50).to_string())
+
+------------------------------------------------------------------------------------------------------------------
+def boxplot_sorted(df, by, column):
+    df2 = pd.DataFrame({col:vals[column] for col, vals in df.groupby(by)})
+    z = df2.quantile(0.05).sort_values()
+    df2[z.index].boxplot(rot=30)
+    means = df2[z.index].mean()
+    plt.scatter(list(range(1,len(means)+1)), means)
+    plt.show()
+
+def print_stats(do_plot=False, update=False, sort_by_str='mean', cols=['Forced','Cost_0_1','Power','Cb_type','LearningRate'], fp=r'c:\Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/sim_code_good_v4_p0.04_2users_totalClip.txt', lr=0.025, cost=1, power_t=0.5, cb_type='dr'):
+    if update:
+        df = pd.read_csv(fp, sep='\t')
+    
+    x = df[(df.Cb_type == cb_type)]
+    x = x.replace({"Forced":{0:'Original',1:'[0.5,0.5]', 2:'max(p,0.5)', 3:'max(p,0.2)', 4:'max(p,0.75)', 6: 'max(p,0.9)', 9:'min(p,0.5)', 5:'[0.4,0.6]', 7:'[0.9,0.9]', 8:'[0.2,0.8]', 10:'[0.45,0.55]', 11:'[0.4,0.5]', 12:'[0.5,0.6]'}})
+    
+    print(x.groupby(by=cols)['GoodActions'].agg(['mean', 'min', percentile(5), percentile(10), percentile(25), 'median', percentile(75), percentile(90), percentile(95), 'max', 'count']).sort_values(by=sort_by_str, ascending=False).head(80).to_string())
+    
+    x = df[(df.Cost_0_1 == cost) & (df.LearningRate == lr) & (df.Power == power_t) & (df.Cb_type == cb_type)]
+    x = x.replace({"Forced":{0:'Original',1:'[0.5,0.5]', 2:'max(p,0.5)', 3:'max(p,0.2)', 4:'max(p,0.75)', 6: 'max(p,0.9)', 9:'min(p,0.5)', 5:'[0.4,0.6]', 7:'[0.9,0.9]', 8:'[0.2,0.8]', 10:'[0.45,0.55]', 11:'[0.4,0.5]', 12:'[0.5,0.6]'}})
+    
+    print(x.groupby(by=cols)['GoodActions'].agg(['mean', 'min', percentile(5), percentile(10), percentile(25), 'median', percentile(75), percentile(90), percentile(95), 'max', 'count']).sort_values(by=sort_by_str, ascending=False).head(25).to_string())
+    
+    if do_plot:
+        boxplot_sorted(x, 'Forced', 'GoodActions')
 
 '''
