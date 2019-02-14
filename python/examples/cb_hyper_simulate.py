@@ -1,6 +1,7 @@
 import numpy as np
 from vowpalwabbit.pyvw import vw
 import multiprocessing, os, sys
+from string import ascii_lowercase
 
 class Command:
     def __init__(self, base, cb_type=None, marginal_list=None, ignore_list=None, interaction_list=None, regularization=None, learning_rate=None, power_t=None, clone_from=None):
@@ -73,11 +74,13 @@ def run_experiment(args_tuple):
     np.random.seed(rnd_seed)
 
     num_customers = 100000
-    customer_types = {'a':1, 'b':2}
+    num_actions = 10
     ctr_all = [0.04, 0.03]
+
+    customer_types = {x:i+1 for i,x in enumerate(ascii_lowercase[:num_actions])}
     
-    actions = [i+1 for i in range(len(customer_types))]
-    p_uniform_random = 1.0/float(len(customer_types))
+    actions = list(range(1, num_actions+1))
+    p_uniform_random = 1.0/float(num_actions)
 
     model = vw(cmd_str+' --quiet')
         
@@ -152,6 +155,8 @@ def run_experiment(args_tuple):
                 prob = 0.6
             else:
                 prob = 0.5
+        elif recorded_prob_type == 13:
+            prob = .5
         
         if zero_one_cost == 1:
             cost = 0.0 if clicked else 1.0
@@ -202,7 +207,7 @@ def result_writer(results, fp):
 if __name__ == '__main__':
 
     # fp = r'/mnt/d/data/vw-python-bug/sim_code_good_v4_p0.04_2users_totalClip.txt'
-    fp = r'/mnt/c/Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/sim_code_good_v4_p0.04_2users_totalClip.txt'
+    fp = r'/mnt/c/Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/sim_code_good_v4_p0.04_10users_totalClip.txt'
 
     if os.path.isfile(fp):
         l = ['\t'.join(x.split('\t')[:9]) for i,x in enumerate(open(fp)) if i > 0]
@@ -219,7 +224,7 @@ if __name__ == '__main__':
         
         skipped = 0
         command_list = []
-        for rnd_seed in range(3971):
+        for rnd_seed in range(302):
             for x in l:
                 recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')[:5]
                 power_t = 0 if power_t == '0.0' else float(power_t)
@@ -227,7 +232,7 @@ if __name__ == '__main__':
                 zero_one_cost = int(zero_one_cost)
                 recorded_prob_type = int(recorded_prob_type)
             
-                command = Command('--cb_explore 2 --epsilon 0.05', regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
+                command = Command('--cb_explore 10 --epsilon 0.05', regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
 
                 s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
                 if s not in already_done:
@@ -245,42 +250,42 @@ if __name__ == '__main__':
         # sys.exit()
         run_experiment_set(command_list, 45, fp)
         
-        # rnd_seed = 3971
-        # while True:
-            # command_list = []
-            # for x in l:
-                # recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')
-                # power_t = 0 if power_t == '0.0' else float(power_t)
-                # lr = float(lr)
-                # zero_one_cost = int(zero_one_cost)
-                # recorded_prob_type = int(recorded_prob_type)
+        rnd_seed = 302
+        while True:
+            command_list = []
+            for x in l:
+                recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')[:5]
+                power_t = 0 if power_t == '0.0' else float(power_t)
+                lr = float(lr)
+                zero_one_cost = int(zero_one_cost)
+                recorded_prob_type = int(recorded_prob_type)
             
-                # command = Command('--cb_explore 2 --epsilon 0.05', regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
-                # command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
+                command = Command('--cb_explore 10 --epsilon 0.05', regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
+                command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
         
-            # run_experiment_set(command_list, 45, fp)
+            run_experiment_set(command_list, 45, fp)
             
-            # rnd_seed += 1
+            rnd_seed += 1
 
-        # else:
-        recorded_prob_types = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    else:
+        recorded_prob_types = [0, 1, 2, 6, 13]
         zero_one_costs = [1, 0]
-        learning_rates = [2.5e-2, 0.5]
+        learning_rates = [1e-5, 1e-3, 1e-2, 1e-1, 0.5, 1, 10]
         regularizations = [0]
         power_t_rates = [0.5]
-        cb_types = ['dr']
+        cb_types = ['dr', 'ips', 'dm']
         
         # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         command_list = []
         skipped = 0
-        for rnd_seed in range(3971):
+        for rnd_seed in range(275):
             for zero_one_cost in zero_one_costs:
                 for recorded_prob_type in recorded_prob_types:
                     for regularization in regularizations:
                         for cb_type in cb_types:
                             for power_t in power_t_rates:
                                 for learning_rate in learning_rates:
-                                    command = Command('--cb_explore 2 --epsilon 0.05', regularization=regularization, learning_rate=learning_rate, power_t=power_t, cb_type=cb_type)
+                                    command = Command('--cb_explore 10 --epsilon 0.05', regularization=regularization, learning_rate=learning_rate, power_t=power_t, cb_type=cb_type)
                                     
                                     s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
                                     if s not in already_done:
@@ -298,7 +303,7 @@ if __name__ == '__main__':
         run_experiment_set(command_list, 45, fp)
         
         print('Start while loop...')
-        rnd_seed = 3971
+        rnd_seed = 275
         command_list = []
         while True:
             for zero_one_cost in zero_one_costs:
@@ -307,11 +312,8 @@ if __name__ == '__main__':
                         for cb_type in cb_types:
                             for power_t in power_t_rates:
                                 for learning_rate in learning_rates:
-                                    command = Command('--cb_explore 2 --epsilon 0.05', regularization=regularization, learning_rate=learning_rate, power_t=power_t, cb_type=cb_type)
-                                    
-                                    # s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
-                                    
-                                    # if s not in already_done:
+                                    command = Command('--cb_explore 10 --epsilon 0.05', regularization=regularization, learning_rate=learning_rate, power_t=power_t, cb_type=cb_type)
+
                                     command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
                                     
                                     if len(command_list) == 450:
