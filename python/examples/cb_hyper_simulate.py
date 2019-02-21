@@ -52,20 +52,20 @@ class Command:
             self.full_command += " --ignore {}".format(ignored_namespace)
         for interaction in self.interaction_list:
             self.full_command += " -q {}".format(interaction)
-        self.full_command += " -l {}".format(self.learning_rate)
-        self.full_command += " --l1 {}".format(self.regularization)
-        self.full_command += " --power_t {}".format(self.power_t)
+        self.full_command += " -l {:g}".format(self.learning_rate)
+        self.full_command += " --l1 {:g}".format(self.regularization)
+        self.full_command += " --power_t {:g}".format(self.power_t)
 
     def prints(self):
-        print("cb type: {0}".format(self.cb_type))
-        print("marginals: {0}".format(self.marginal_list))
-        print("ignore list: {0}".format(self.ignore_list))
-        print("interactions: {0}".format(self.interaction_list))
-        print("learning rate: {0}".format(self.learning_rate))
-        print("regularization: {0}".format(self.regularization))
-        print("power_t: {0}".format(self.power_t))
+        print("cb type: {}".format(self.cb_type))
+        print("marginals: {}".format(self.marginal_list))
+        print("ignore list: {}".format(self.ignore_list))
+        print("interactions: {}".format(self.interaction_list))
+        print("learning rate: {:g}".format(self.learning_rate))
+        print("regularization: {:g}".format(self.regularization))
+        print("power_t: {:g}".format(self.power_t))
         print("overall command: {0}".format(self.full_command))
-        print("loss: {0}".format(self.loss))
+        print("loss: {}".format(self.loss))
 
 def run_experiment(args_tuple):
 
@@ -224,7 +224,7 @@ if __name__ == '__main__':
         
         skipped = 0
         command_list = []
-        for rnd_seed in range(302):
+        for rnd_seed in range(10222):
             for x in l:
                 recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')[:5]
                 power_t = 0 if power_t == '0.0' else float(power_t)
@@ -250,9 +250,9 @@ if __name__ == '__main__':
         # sys.exit()
         run_experiment_set(command_list, 45, fp)
         
-        rnd_seed = 302
+        rnd_seed = 10222
+        command_list = []
         while True:
-            command_list = []
             for x in l:
                 recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')[:5]
                 power_t = 0 if power_t == '0.0' else float(power_t)
@@ -263,8 +263,10 @@ if __name__ == '__main__':
                 command = Command('--cb_explore 10 --epsilon 0.05', regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
                 command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
         
-            run_experiment_set(command_list, 45, fp)
-            
+                if len(command_list) == 450:
+                    run_experiment_set(command_list, 45, fp)
+                    command_list = []
+
             rnd_seed += 1
 
     else:
