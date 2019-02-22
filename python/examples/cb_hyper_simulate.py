@@ -345,7 +345,7 @@ def percentile(n):
 
 plt.rcParams.update({'font.size': 22})
 
-fp = r'c:\Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/sim_code_good_v4_p0.04_2users_totalClip.txt'
+fp = r'c:\Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/sim_code_good_v4_p0.04_10users_totalClip.txt'
 
 cols = ['Forced','Cost_0_1','Power','Cb_type','LearningRate']
 
@@ -439,7 +439,7 @@ print(x.groupby(by=cols)['GoodActions'].agg(['mean', 'min', percentile(5), perce
 ------------------------------------------------------------------------------------------------------------------
 def boxplot_sorted(df, by, column):
     df2 = pd.DataFrame({col:vals[column] for col, vals in df.groupby(by)})
-    z = df2.quantile(0.05).sort_values()
+    z = df2.quantile(0.1).sort_values()
     df2[z.index].boxplot(rot=30)
     means = df2[z.index].mean()
     plt.scatter(list(range(1,len(means)+1)), means)
@@ -449,7 +449,7 @@ def print_stats(do_plot=False, update=False, sort_by_str='mean', cols=['Forced',
     if update:
         df = pd.read_csv(fp, sep='\t')
     
-    x = df[(df.Cb_type == cb_type)]
+    x = df[(df.Cb_type == cb_type) & (df.Forced <= 2)]
     x = x.replace({"Forced":{0:'Original',1:'[0.5,0.5]', 2:'max(p,0.5)', 3:'max(p,0.2)', 4:'max(p,0.75)', 6: 'max(p,0.9)', 9:'min(p,0.5)', 5:'[0.4,0.6]', 7:'[0.9,0.9]', 8:'[0.2,0.8]', 10:'[0.45,0.55]', 11:'[0.4,0.5]', 12:'[0.5,0.6]'}})
     
     print(x.groupby(by=cols)['GoodActions'].agg(['mean', 'min', percentile(5), percentile(10), percentile(25), 'median', percentile(75), percentile(90), percentile(95), 'max', 'count']).sort_values(by=sort_by_str, ascending=False).head(80).to_string())
@@ -460,7 +460,8 @@ def print_stats(do_plot=False, update=False, sort_by_str='mean', cols=['Forced',
     print(x.groupby(by=cols)['GoodActions'].agg(['mean', 'min', percentile(5), percentile(10), percentile(25), 'median', percentile(75), percentile(90), percentile(95), 'max', 'count']).sort_values(by=sort_by_str, ascending=False).head(25).to_string())
     
     if do_plot:
-        boxplot_sorted(x, 'Forced', 'GoodActions')
+        x.boxplot(by=['LearningRate','Forced'], column=['GoodActions'], rot=30)
+        #boxplot_sorted(x, ['LearningRate','Forced'], 'GoodActions')
 
 ------------------------------------------------------------------------------------------------
 fp = r'c:\Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/myFile_Actions10.txt'
