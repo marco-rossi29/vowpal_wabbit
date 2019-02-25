@@ -74,7 +74,7 @@ def run_experiment(args_tuple):
     np.random.seed(rnd_seed)
 
     num_customers = 100000
-    num_actions = 10
+    num_actions = 5
     ctr_all = [0.04, 0.03]
 
     customer_types = {x:i+1 for i,x in enumerate(ascii_lowercase[:num_actions])}
@@ -207,7 +207,7 @@ def result_writer(results, fp):
 if __name__ == '__main__':
 
     # fp = r'/mnt/d/data/vw-python-bug/sim_code_good_v4_p0.04_2users_totalClip.txt'
-    fp = r'/mnt/c/Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/sim_code_good_v4_p0.04_10users_totalClip.txt'
+    fp = r'/mnt/c/Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/sim_code_good_v4_p0.04_5users_totalClip.txt'
 
     if os.path.isfile(fp):
         l = ['\t'.join(x.split('\t')[:9]) for i,x in enumerate(open(fp)) if i > 0]
@@ -224,35 +224,35 @@ if __name__ == '__main__':
     if True:
         l = [x.strip() for x in open(fpi)][1:]
         
-        skipped = 0
-        command_list = []
-        for rnd_seed in range(10222):
-            for x in l:
-                recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')[:5]
-                power_t = 0 if power_t == '0.0' else float(power_t)
-                lr = float(lr)
-                zero_one_cost = int(zero_one_cost)
-                recorded_prob_type = int(recorded_prob_type)
+        # skipped = 0
+        # command_list = []
+        # for rnd_seed in range(10222):
+            # for x in l:
+                # recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')[:5]
+                # power_t = 0 if power_t == '0.0' else float(power_t)
+                # lr = float(lr)
+                # zero_one_cost = int(zero_one_cost)
+                # recorded_prob_type = int(recorded_prob_type)
             
-                command = Command('--cb_explore 10 --epsilon 0.05', regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
+                # command = Command('--cb_explore 10 --epsilon 0.05', regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
 
-                s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
-                if s not in already_done:
-                    command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
-                else:
-                    skipped += 1
-                    # print(s)
-                    # raw_input()
+                # s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
+                # if s not in already_done:
+                    # command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
+                # else:
+                    # skipped += 1
+                    # # print(s)
+                    # # raw_input()
 
-                if len(command_list) == 450:
-                    run_experiment_set(command_list, 45, fp)
-                    command_list = []
-        print(len(command_list),skipped)
-        # print(command_list)
-        # sys.exit()
-        run_experiment_set(command_list, 45, fp)
+                # if len(command_list) == 450:
+                    # run_experiment_set(command_list, 45, fp)
+                    # command_list = []
+        # print(len(command_list),skipped)
+        # # print(command_list)
+        # # sys.exit()
+        # run_experiment_set(command_list, 45, fp)
         
-        rnd_seed = 10222
+        rnd_seed = 0
         command_list = []
         while True:
             for x in l:
@@ -262,7 +262,7 @@ if __name__ == '__main__':
                 zero_one_cost = int(zero_one_cost)
                 recorded_prob_type = int(recorded_prob_type)
             
-                command = Command('--cb_explore 10 --epsilon 0.05', regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
+                command = Command('--cb_explore 5 --epsilon 0.05', regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
                 command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
         
                 if len(command_list) == 450:
