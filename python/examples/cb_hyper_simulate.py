@@ -216,6 +216,8 @@ if __name__ == '__main__':
         already_done = set(l)
         print(len(already_done))
     else:
+        with open(fp, 'a') as experiment_file:
+            experiment_file.write('Actions\tEps\tCb_type\tLearningRate\tL1-Reg\tPowerT\tForced\tSeed\tCost_0_1\tCTR Math\tCTR\tClicks\tIters\tGoodActions\tBadActions\n')
         already_done = set()
     
     fpi = r'/mnt/c/Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/cb_hyper_simulate_input.csv'
