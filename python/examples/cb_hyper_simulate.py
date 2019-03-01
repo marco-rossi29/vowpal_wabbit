@@ -464,16 +464,20 @@ def print_stats(do_plot=False, update=False, sort_by_str='mean', cols=['Forced',
         #boxplot_sorted(x, ['LearningRate','Forced'], 'GoodActions')
 
 ------------------------------------------------------------------------------------------------
-fp = r'c:\Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/myFile_Actions10.txt'
+fp = r'c:\Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/myFile_Actions2.txt'
 df = pd.read_json(fp, lines=True)
 
+df = df[df.Iter == 100000]
 df['Cb_type'] = df.apply(lambda row: row['ml_args'].split(' ')[6], axis=1)
 df['LearningRate'] = df.apply(lambda row: row['ml_args'].split(' ')[4], axis=1)
-df['eps'] = df.apply(lambda row: row['ml_args'].split(' ')[2], axis=1)
+# df['eps'] = df.apply(lambda row: row['ml_args'].split(' ')[2], axis=1)
+df = df.replace({"pStrategy":{0:'Original',1:'Uniform', 2:'max(p,0.5)', 3:'max(p,0.2)', 4:'max(p,0.75)', 6: 'max(p,0.9)', 9:'min(p,0.5)', 5:'[0.4,0.6]', 7:'[0.9,0.9]', 8:'[0.2,0.8]', 10:'[0.45,0.55]', 11:'[0.4,0.5]', 12:'[0.5,0.6]', 13:'0.5'}})
 
-x = df.replace({"pStrategy":{0:'Original',1:'Uniform', 2:'max(p,0.5)', 3:'max(p,0.2)', 4:'max(p,0.75)', 6: 'max(p,0.9)', 9:'min(p,0.5)', 5:'[0.4,0.6]', 7:'[0.9,0.9]', 8:'[0.2,0.8]', 10:'[0.45,0.55]', 11:'[0.4,0.5]', 12:'[0.5,0.6]', 13:'0.5'}})
-print(x[x.Iter == 100000].groupby(by=cols)['goodActions'].agg(['mean', 'min', percentile(5), percentile(10), percentile(25), 'median', percentile(75), percentile(90), percentile(95), 'max', 'count']).sort_values(by='mean', ascending=False).head(50).to_string())
+cols = ['pStrategy','baseCost','Cb_type','LearningRate']
 
+print(df.groupby(by=cols)['goodActions'].agg(['mean', 'min', percentile(5), percentile(10), percentile(25), 'median', percentile(75), percentile(90), percentile(95), 'max', 'count']).sort_values(by='mean', ascending=False).head(50).to_string())
+
+print(df[(df.baseCost == 0.0) & (df.pStrategy == 'Original')].groupby(by=cols)['goodActions'].agg(['mean', 'min', percentile(5), percentile(10), percentile(25), 'median', percentile(75), percentile(90), percentile(95), 'max', 'count']).to_string())
 '''
 
 
