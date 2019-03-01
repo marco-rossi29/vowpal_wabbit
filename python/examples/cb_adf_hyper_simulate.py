@@ -1,5 +1,5 @@
 import numpy as np
-import multiprocessing, os, sys
+import multiprocessing, os, sys, argparse
 from subprocess import check_output, STDOUT
 
 class Command:
@@ -44,8 +44,7 @@ class Command:
 
         # Create full_command
         self.full_command = self.base
-        if self.learning_rate != 0.5:
-            self.full_command += " -l {:g}".format(self.learning_rate)
+        self.full_command += " -l {:g}".format(self.learning_rate)
         self.full_command += " --cb_type {}".format(self.cb_type)
         for interaction in self.interaction_list:
             self.full_command += " -q {}".format(interaction)
@@ -100,130 +99,135 @@ def result_writer(results, fp):
 
 if __name__ == '__main__':
 
-    fp = r'C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\pippo.txt'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a','--num_actions', type=int, required=True)
+    parser.add_argument('-p','--num_proc', type=int, required=True)
+    parser.add_argument('--fp', help="output file path", required=True)
+    parser.add_argument('-b','--base_cmd', help="base command (default: --cb_explore_adf --epsilon 0.05)", default='--cb_explore_adf --epsilon 0.05')
+    parser.add_argument('-r','--rnd_seed_start_while_loop', type=int, default=0)
+    parser.add_argument('--fpi', help="input file path", default='')
+    parser.add_argument('--dry_run', help="print which blobs would have been downloaded, without downloading", action='store_true')
+    
+    # Parse input and create variables
+    args_dict = vars(parser.parse_args())   # this creates a dictionary with all input CLI
+    for x in args_dict:
+        locals()[x] = args_dict[x]  # this is equivalent to foo = args.foo
 
     if os.path.isfile(fp):
-        l = ['\t'.join(x.split('\t')[:9]) for i,x in enumerate(open(fp)) if i > 0]
+        l = [x.split(',"Iter"',1)[0] for x in open(fp)]
         print(len(l))
         
         already_done = set(l)
         print(len(already_done))
+        # print(list(already_done)[:5])
     else:
         already_done = set()
     
-    #"--cb_explore_adf --epsilon 0.05 -l 0.005 --cb_type dr -q UB"
+    # test a single experiment set
+    # command = Command(base_cmd, learning_rate=0.005, power_t=0.5, cb_type='dr', interaction_list=['UB'])
+    # run_experiment_set([(command.full_command, 5, 1.0, 7, 24), (command.full_command, 5, 0.0, 7, 24)], 20, fp)
+    # sys.exit()
     
-    base_cmd = '--cb_explore_adf --epsilon 0.05'
-    command = Command(base_cmd, learning_rate=0.005, power_t=0.5, cb_type='dr', interaction_list=['UB'])
+    num_sim = num_proc * 50
     
-    run_experiment_set([(command.full_command, 5, 1.0, 7, 24), (command.full_command, 5, 0.0, 7, 24)], 20, fp)
-    
-    sys.exit()
-    
-    
-    fpi = r'C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\cb_hyper_simulate_input.csv'
-    if True:
+    #fpi = r'C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\cb_hyper_simulate_input.csv'
+    if os.path.isfile(fpi):
         l = [x.strip() for x in open(fpi)][1:]
         
         skipped = 0
         command_list = []
-        for rnd_seed in range(10222):
+        for rnd_seed in range(rnd_seed_start_while_loop):
             for x in l:
-                recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')[:5]
-                power_t = 0 if power_t == '0.0' else float(power_t)
+                pStrategy,baseCost,cb_type,lr = x.split(',')[:4]
                 lr = float(lr)
-                zero_one_cost = int(zero_one_cost)
-                recorded_prob_type = int(recorded_prob_type)
+                baseCost = float(baseCost)
+                pStrategy = int(pStrategy)
             
-                command = Command(base_cmd, regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
+                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type, interaction_list=['UB'])
 
-                s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
+                s = '{{"ml_args":"{}","numActions":{},"baseCost":{},"pStrategy":{},"rewardSeed":{}'.format(command.full_command, num_actions, baseCost, pStrategy, rnd_seed)
                 if s not in already_done:
-                    command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
+                    command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
                 else:
                     skipped += 1
-                    # print(s)
-                    # raw_input()
 
-                if len(command_list) == 450:
-                    run_experiment_set(command_list, 45, fp)
+                if len(command_list) == num_sim and not dry_run:
+                    run_experiment_set(command_list, num_proc, fp)
                     command_list = []
         print(len(command_list),skipped)
         # print(command_list)
-        # sys.exit()
-        run_experiment_set(command_list, 45, fp)
+        if dry_run:
+            sys.exit()
+        run_experiment_set(command_list, num_proc, fp)
         
-        rnd_seed = 10222
+        rnd_seed = rnd_seed_start_while_loop
         command_list = []
         while True:
             for x in l:
-                recorded_prob_type,zero_one_cost,power_t,cb_type,lr = x.split(',')[:5]
-                power_t = 0 if power_t == '0.0' else float(power_t)
+                pStrategy,baseCost,cb_type,lr = x.split(',')[:4]
                 lr = float(lr)
-                zero_one_cost = int(zero_one_cost)
-                recorded_prob_type = int(recorded_prob_type)
+                baseCost = float(baseCost)
+                pStrategy = int(pStrategy)
             
-                command = Command(base_cmd, regularization=0, learning_rate=lr, power_t=power_t, cb_type=cb_type)
-                command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
+                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type, interaction_list=['UB'])
+                command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
         
-                if len(command_list) == 450:
-                    run_experiment_set(command_list, 45, fp)
+                if len(command_list) == num_sim:
+                    run_experiment_set(command_list, num_proc, fp)
                     command_list = []
 
             rnd_seed += 1
 
     else:
-        recorded_prob_types = [0, 1, 2, 6, 13]
-        zero_one_costs = [1, 0]
-        learning_rates = [1e-5, 1e-3, 1e-2, 1e-1, 0.5, 1, 10]
-        regularizations = [0]
-        power_t_rates = [0.5]
-        cb_types = ['dr', 'ips', 'dm']
+        recorded_prob_types = [0, 1, 2, 6, 7]
+        baseCosts = [1.0, 0.0]
+        learning_rates = [1e-3, 5e-3, 1e-2, 2.5e-2, 5e-2, 1e-1, 0.5, 1, 10]
+        cb_types = ['dr', 'ips', 'dm', 'mtr']
         
         # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         command_list = []
         skipped = 0
-        for rnd_seed in range(275):
-            for zero_one_cost in zero_one_costs:
-                for recorded_prob_type in recorded_prob_types:
-                    for regularization in regularizations:
-                        for cb_type in cb_types:
-                            for power_t in power_t_rates:
-                                for learning_rate in learning_rates:
-                                    command = Command(base_cmd, regularization=regularization, learning_rate=learning_rate, power_t=power_t, cb_type=cb_type)
-                                    
-                                    s = '\t'.join(map(str, command.full_command.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost]))
-                                    if s not in already_done:
-                                        command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
-                                    else:
-                                        skipped += 1
-                                        # print(s)
-                                        # raw_input()
-        
-                                    if len(command_list) == 450:
-                                        run_experiment_set(command_list, 45, fp)
-                                        command_list = []
+        for rnd_seed in range(rnd_seed_start_while_loop):
+            for baseCost in baseCosts:
+                for pStrategy in recorded_prob_types:
+                    for cb_type in cb_types:
+                        for lr in learning_rates:                                   
+                            command = Command(base_cmd, learning_rate=lr, cb_type=cb_type, interaction_list=['UB'])
+
+                            s = '{{"ml_args":"{}","numActions":{},"baseCost":{},"pStrategy":{},"rewardSeed":{}'.format(command.full_command, num_actions, baseCost, pStrategy, rnd_seed)
+                            # print(s)
+                            # input()
+                            if s not in already_done:
+                                command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
+                            else:
+                                skipped += 1
+
+                            if len(command_list) == num_sim and not dry_run:
+                                run_experiment_set(command_list, num_proc, fp)
+                                command_list = []
         print(len(command_list),skipped)
-        # sys.exit()
-        run_experiment_set(command_list, 45, fp)
+        if dry_run:
+            for x in command_list:
+                print(x)
+                input()
+            sys.exit()
+        run_experiment_set(command_list, num_proc, fp)
         
         print('Start while loop...')
-        rnd_seed = 275
+        rnd_seed = rnd_seed_start_while_loop
         command_list = []
         while True:
-            for zero_one_cost in zero_one_costs:
-                for recorded_prob_type in recorded_prob_types:
-                    for regularization in regularizations:
-                        for cb_type in cb_types:
-                            for power_t in power_t_rates:
-                                for learning_rate in learning_rates:
-                                    command = Command(base_cmd, regularization=regularization, learning_rate=learning_rate, power_t=power_t, cb_type=cb_type)
+            for baseCost in baseCosts:
+                for pStrategy in recorded_prob_types:
+                    for cb_type in cb_types:
+                        for learning_rate in learning_rates:  
+                            command = Command(base_cmd, learning_rate=lr, cb_type=cb_type, interaction_list=['UB'])
 
-                                    command_list.append((command.full_command, recorded_prob_type, rnd_seed, zero_one_cost))
-                                    
-                                    if len(command_list) == 450:
-                                        run_experiment_set(command_list, 45, fp)
-                                        command_list = []
+                            command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
+                            
+                            if len(command_list) == num_sim:
+                                run_experiment_set(command_list, num_proc, fp)
+                                command_list = []
             
             rnd_seed += 1
 
