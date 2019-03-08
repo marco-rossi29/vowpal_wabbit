@@ -1,5 +1,5 @@
 import numpy as np
-import multiprocessing, os, sys, argparse
+import multiprocessing, os, sys, argparse, gzip
 from subprocess import check_output, STDOUT
 
 class Command:
@@ -73,10 +73,13 @@ def run_experiment(args_tuple):
     ml_args, num_actions, base_cost, pStrategy, rnd_seed = args_tuple
 
     cmd_list = ['C:\\work\\bin\\Simulator_action-per-context_SINGLE\\PerformanceConsole.exe', ml_args]
-    cmd_list += ('{} 0.03 0.04 {} {} 100000 10000 {}'.format(num_actions, base_cost, pStrategy, rnd_seed)).split(' ')
+    cmd_list += ('{} 0.03 0.04 {} {} 1000000 10000 {}'.format(num_actions, base_cost, pStrategy, rnd_seed)).split(' ')
     
     try:
-        return check_output(cmd_list, stderr=STDOUT, universal_newlines=True)
+        x = check_output(cmd_list, stderr=STDOUT, universal_newlines=True)
+        if not x.startswith('{'):
+            x = x.split('\n',1)[1]
+        return x
     except Exception as e:
         print("Error for command {}: {}".format(' '.join(cmd_list), e))
     
@@ -90,18 +93,19 @@ def run_experiment_set(command_list, n_proc, fp):
         p.join()
         del p
         result_writer(results, fp)
+        print(results[-1].split('\n')[-2])
 
 def result_writer(results, fp):
-    with open(fp, 'a') as experiment_file:
+    with (gzip.open(fp, 'at') if fp.endswith('.gz') else open(fp, 'a')) as f:
         for result in results:
-            experiment_file.write(result)
-        experiment_file.flush()
+            f.write(result)
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-a','--num_actions', type=int, required=True)
     parser.add_argument('-p','--num_proc', type=int, required=True)
+    parser.add_argument('-n','--num_sim', type=int, required=True)
     parser.add_argument('--fp', help="output file path", required=True)
     parser.add_argument('-b','--base_cmd', help="base command (default: --cb_explore_adf --epsilon 0.05)", default='--cb_explore_adf --epsilon 0.05')
     parser.add_argument('-r','--rnd_seed_start_while_loop', type=int, default=0)
@@ -113,22 +117,21 @@ if __name__ == '__main__':
     for x in args_dict:
         locals()[x] = args_dict[x]  # this is equivalent to foo = args.foo
 
+    already_done = set()
     if os.path.isfile(fp):
-        l = [x.split(',"Iter"',1)[0] for x in open(fp)]
-        print(len(l))
-        
-        already_done = set(l)
-        print(len(already_done))
-        # print(list(already_done)[:5])
-    else:
-        already_done = set()
+        lines = [0,0]
+        for x in (gzip.open(fp, 'rt') if fp.endswith('.gz') else open(fp)):
+            lines[1] += 1
+            
+            if ',"Iter":100000,' in x:
+                lines[0] += 1
+                already_done.add(x.split(',"Iter"',1)[0])
+        print('Total lines: {}\nIter1M lines: {}\nIter1M unique: {}'.format(lines[1],lines[0],len(already_done)))        
     
     # test a single experiment set
     # command = Command(base_cmd, learning_rate=0.005, power_t=0.5, cb_type='dr', interaction_list=['UB'])
     # run_experiment_set([(command.full_command, 5, 1.0, 7, 24), (command.full_command, 5, 0.0, 7, 24)], 20, fp)
     # sys.exit()
-    
-    num_sim = num_proc * 50
     
     #fpi = r'C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\cb_hyper_simulate_input.csv'
     if os.path.isfile(fpi):
@@ -154,12 +157,16 @@ if __name__ == '__main__':
                 if len(command_list) == num_sim and not dry_run:
                     run_experiment_set(command_list, num_proc, fp)
                     command_list = []
-        print(len(command_list),skipped)
+        print('len(command_list): {}\nskipped: {}'.format(len(command_list),skipped))
         # print(command_list)
         if dry_run:
+            for x in command_list:
+                print(x)
+                input()
             sys.exit()
         run_experiment_set(command_list, num_proc, fp)
         
+        print('Start while loop...')
         rnd_seed = rnd_seed_start_while_loop
         command_list = []
         while True:
@@ -181,8 +188,8 @@ if __name__ == '__main__':
     else:
         recorded_prob_types = [0, 1, 2, 6, 7]
         baseCosts = [1.0, 0.0]
-        learning_rates = [1e-3, 5e-3, 1e-2, 2.5e-2, 5e-2, 1e-1, 0.5, 1, 10]
-        cb_types = ['dr', 'ips', 'dm', 'mtr']
+        learning_rates = [1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100]
+        cb_types = ['dr', 'mtr', 'ips']
         
         # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         command_list = []
@@ -231,3 +238,4 @@ if __name__ == '__main__':
             
             rnd_seed += 1
 
+# python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -a 2 -p 43 -n 430 -r 10000 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\myFile_Actions2.txt.gz"

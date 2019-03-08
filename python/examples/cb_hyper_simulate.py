@@ -336,6 +336,8 @@ if __name__ == '__main__':
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import itertools, os, gzip
+from cycler import cycler
 
 def percentile(n):
     def percentile_(x):
@@ -343,7 +345,13 @@ def percentile(n):
     percentile_.__name__ = 'per_%s' % n
     return percentile_
 
-plt.rcParams.update({'font.size': 22})
+
+prop_cycle = plt.rcParams['axes.prop_cycle']
+colors = prop_cycle.by_key()['color']
+s,c = zip(*itertools.product(['-', '--', ':', '-.',(0, (1, 1))], colors[:6]))
+plt.rc('axes', prop_cycle=(cycler('color', c) + cycler('linestyle', s)))
+
+plt.rcParams.update({'font.size': 18})
 
 fp = r'c:\Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/sim_code_good_v4_p0.04_10users_totalClip.txt'
 
@@ -437,11 +445,18 @@ x.groupby('Forced')['GoodActions'].plot(kind='hist', density=True, cumulative=Tr
 print(x.groupby(by=cols)['GoodActions'].agg(['mean', 'min', percentile(5), percentile(10), percentile(25), 'median', percentile(75), percentile(90), percentile(95), 'max', 'count']).sort_values(by='min', ascending=False).head(50).to_string())
 
 ------------------------------------------------------------------------------------------------------------------
-def boxplot_sorted(df, by, column):
+def boxplot_sorted(df, by, column, rot=90):
     df2 = pd.DataFrame({col:vals[column] for col, vals in df.groupby(by)})
-    z = df2.quantile(0.1).sort_values()
-    df2[z.index].boxplot(rot=30)
+    z = df2.mean().sort_values()
+    df2[z.index].boxplot(rot=rot)
     means = df2[z.index].mean()
+    plt.scatter(list(range(1,len(means)+1)), means)
+    plt.show()
+
+def boxplot(df, by, column, rot=90):
+    df2 = pd.DataFrame({col:vals[column] for col, vals in df.groupby(by)})
+    df2.boxplot(rot=rot)
+    means = df2.mean()
     plt.scatter(list(range(1,len(means)+1)), means)
     plt.show()
 
@@ -465,19 +480,49 @@ def print_stats(do_plot=False, update=False, sort_by_str='mean', cols=['Forced',
 
 ------------------------------------------------------------------------------------------------
 fp = r'c:\Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/myFile_Actions2.txt'
-df = pd.read_json(fp, lines=True)
 
-df = df[df.Iter == 100000]
-df['Cb_type'] = df.apply(lambda row: row['ml_args'].split(' ')[6], axis=1)
-df['LearningRate'] = df.apply(lambda row: row['ml_args'].split(' ')[4], axis=1)
-# df['eps'] = df.apply(lambda row: row['ml_args'].split(' ')[2], axis=1)
-df = df.replace({"pStrategy":{0:'Original',1:'Uniform', 2:'max(p,0.5)', 3:'max(p,0.2)', 4:'max(p,0.75)', 6: 'max(p,0.9)', 9:'min(p,0.5)', 5:'[0.4,0.6]', 7:'[0.9,0.9]', 8:'[0.2,0.8]', 10:'[0.45,0.55]', 11:'[0.4,0.5]', 12:'[0.5,0.6]', 13:'0.5'}})
+def load_df(fp, rename_pStrategy=True, fpi=None):
+    
+    if fpi and os.path.isfile(fpi):
+        if os.path.isfile(fp):
+            if input('File already exist. Press ENTER to overwrite...' ) != '':
+                return None
+        print('Create 1M lines file')
+        with open(fp,'wb') as f:
+            for x in gzip.open(fpi):
+                if b'"Iter":1000000,' in x:
+                    f.write(x)
+    print('Loading input file')
+    df = pd.read_json(fp, lines=True)
+    print('Creating columns')
+    df['Cb_type'] = df.apply(lambda row: row['ml_args'].split(' ')[6], axis=1)
+    df['LearningRate'] = df.apply(lambda row: float(row['ml_args'].split(' ')[4]), axis=1)
+    # df['eps'] = df.apply(lambda row: row['ml_args'].split(' ')[2], axis=1)
+    if rename_pStrategy:
+        print('Rename pStrategy col')
+        df = df.replace({"pStrategy":{0:'Original',1:'Uniform', 2:'max(p,0.5)', 3:'max(p,0.2)', 4:'max(p,0.75)', 6: 'max(p,0.9)', 9:'min(p,0.5)', 5:'[0.4,0.6]', 7:'[0.9,0.9]', 8:'[0.2,0.8]', 10:'[0.45,0.55]', 11:'[0.4,0.5]', 12:'[0.5,0.6]', 13:'0.5'}})
+    return df
+    
+def semilogx(df, cols=['pStrategy','baseCost','Cb_type','LearningRate']):
+    fig, ax = plt.subplots(figsize=(8,6))
+    df.groupby(by=cols)['goodActions'].agg('mean').unstack().transpose().plot(ax=ax)
+    ax.set_xscale('log')
+    plt.show()
 
+    
 cols = ['pStrategy','baseCost','Cb_type','LearningRate']
 
 print(df.groupby(by=cols)['goodActions'].agg(['mean', 'min', percentile(5), percentile(10), percentile(25), 'median', percentile(75), percentile(90), percentile(95), 'max', 'count']).sort_values(by='mean', ascending=False).head(50).to_string())
 
 print(df[(df.baseCost == 0.0) & (df.pStrategy == 'Original')].groupby(by=cols)['goodActions'].agg(['mean', 'min', percentile(5), percentile(10), percentile(25), 'median', percentile(75), percentile(90), percentile(95), 'max', 'count']).to_string())
+
+
+df[df.Iter == 500000].groupby(by=cols)['goodActions'].agg('mean').unstack(level=[0,1,2]).fillna(0)
+print(df.groupby(by=cols)['goodActions'].agg('mean').unstack(level=[0,1,2]).fillna(0).agg(max).sort_values(ascending=False).to_string())
+print(df.groupby(by=cols)['goodActions'].agg('count').unstack(level=[0,1,2]).transpose().to_string())
+print(df[df.Iter == 1000000].groupby(by=cols)['goodActions'].agg('mean').unstack(level=[0,1,2]).transpose().to_string())
+
+
 '''
 
 
