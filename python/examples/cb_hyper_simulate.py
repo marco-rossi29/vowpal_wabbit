@@ -481,23 +481,29 @@ def print_stats(do_plot=False, update=False, sort_by_str='mean', cols=['Forced',
 ------------------------------------------------------------------------------------------------
 fp = r'c:\Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/myFile_Actions2.txt'
 
-def load_df(fp, rename_pStrategy=True, fpi=None):
-    
+def load_df(fp, rename_pStrategy=True, fpi=None, grep_fpi=b'"Iter":1000000,'):
     if fpi and os.path.isfile(fpi):
         if os.path.isfile(fp):
             if input('File already exist. Press ENTER to overwrite...' ) != '':
                 return None
-        print('Create 1M lines file')
+        print('Grepping lines with:',grep_fpi)
         with open(fp,'wb') as f:
-            for x in gzip.open(fpi):
-                if b'"Iter":1000000,' in x:
+            for i,x in enumerate(gzip.open(fpi)):
+                if (i+1) % 10000 == 0:
+                    ds_parse.update_progress(i+1,prefix=fpi+' - ')
+                if grep_fpi in x:
                     f.write(x)
+            len_text = ds_parse.update_progress(i+1,prefix=fpi+' - ')
+            sys.stdout.write("\r" + " "*len_text + "\r")
+            sys.stdout.flush()
+
     print('Loading input file')
     df = pd.read_json(fp, lines=True)
     print('Creating columns')
     df['Cb_type'] = df.apply(lambda row: row['ml_args'].split(' ')[6], axis=1)
     df['LearningRate'] = df.apply(lambda row: float(row['ml_args'].split(' ')[4]), axis=1)
     # df['eps'] = df.apply(lambda row: row['ml_args'].split(' ')[2], axis=1)
+    df['y'] = df['goodActions']/df['Iter']
     if rename_pStrategy:
         print('Rename pStrategy col')
         df = df.replace({"pStrategy":{0:'Original',1:'Uniform', 2:'max(p,0.5)', 3:'max(p,0.2)', 4:'max(p,0.75)', 6: 'max(p,0.9)', 9:'min(p,0.5)', 5:'[0.4,0.6]', 7:'[0.9,0.9]', 8:'[0.2,0.8]', 10:'[0.45,0.55]', 11:'[0.4,0.5]', 12:'[0.5,0.6]', 13:'0.5'}})
