@@ -500,9 +500,9 @@ def load_df(fp, rename_pStrategy=True, fpi=None, grep_fpi=b'"Iter":1000000,'):
     print('Loading input file')
     df = pd.read_json(fp, lines=True)
     print('Creating columns')
-    df['Cb_type'] = df.apply(lambda row: row['ml_args'].split(' ')[6], axis=1)
-    df['LearningRate'] = df.apply(lambda row: float(row['ml_args'].split(' ')[4]), axis=1)
-    # df['eps'] = df.apply(lambda row: row['ml_args'].split(' ')[2], axis=1)
+    df['Cb_type'] = df.apply(lambda row: row['ml_args'].split(' --cb_type ',1)[1].split(' ',1)[0], axis=1)
+    df['LearningRate'] = df.apply(lambda row: float(row['ml_args'].split(' -l ',1)[1].split(' ',1)[0]), axis=1)
+    #df['eps'] = df.apply(lambda row: row['ml_args'].split(' --epsilon ',1)[1].split(' ',1)[0], axis=1)
     df['y'] = df['goodActions']/df['Iter']
     if rename_pStrategy:
         print('Rename pStrategy col')
