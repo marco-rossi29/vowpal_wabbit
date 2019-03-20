@@ -129,7 +129,7 @@ if __name__ == '__main__':
         print('Total lines: {}\nIter1M lines: {}\nIter1M unique: {}'.format(lines[1],lines[0],len(already_done)))        
     
     # test a single experiment set
-    # command = Command(base_cmd, learning_rate=0.005, power_t=0.5, cb_type='dr', interaction_list=['UB'])
+    # command = Command(base_cmd, learning_rate=0.005, power_t=0.5, cb_type='dr')
     # run_experiment_set([(command.full_command, 5, 1.0, 7, 24), (command.full_command, 5, 0.0, 7, 24)], 20, fp)
     # sys.exit()
     
@@ -146,7 +146,7 @@ if __name__ == '__main__':
                 baseCost = float(baseCost)
                 pStrategy = int(pStrategy)
             
-                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type, interaction_list=['UB'])
+                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type)
 
                 s = '{{"ml_args":"{}","numActions":{},"baseCost":{},"pStrategy":{},"rewardSeed":{}'.format(command.full_command, num_actions, baseCost, pStrategy, rnd_seed)
                 if s not in already_done:
@@ -176,7 +176,7 @@ if __name__ == '__main__':
                 baseCost = float(baseCost)
                 pStrategy = int(pStrategy)
             
-                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type, interaction_list=['UB'])
+                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type)
                 command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
         
                 if len(command_list) == num_sim:
@@ -204,7 +204,7 @@ if __name__ == '__main__':
                     for pStrategy in recorded_prob_types:
                         for cb_type in cb_types:
                             for lr in learning_rates:                                   
-                                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type, interaction_list=['UB'])
+                                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type)
 
                                 s = '{{"ml_args":"{}","numActions":{},"baseCost":{},"pStrategy":{},"rewardSeed":{}'.format(command.full_command, num_actions, baseCost, pStrategy, rnd_seed)
                                 # print(s)
@@ -234,7 +234,7 @@ if __name__ == '__main__':
                     for pStrategy in recorded_prob_types:
                         for cb_type in cb_types:
                             for lr in learning_rates:  
-                                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type, interaction_list=['UB'])
+                                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type)
 
                                 command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
                                 
@@ -245,3 +245,4 @@ if __name__ == '__main__':
             rnd_seed += 1
 
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -a 2 -p 43 -n 430 -r 10000 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\myFile_Actions2.txt.gz"
+# python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --epsilon 0.05 --marginal A" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions2-10_marginal_noQ.txt"

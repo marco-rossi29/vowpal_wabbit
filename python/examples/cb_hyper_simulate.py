@@ -481,7 +481,7 @@ def print_stats(do_plot=False, update=False, sort_by_str='mean', cols=['Forced',
 ------------------------------------------------------------------------------------------------
 fp = r'c:\Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/myFile_Actions2.txt'
 
-def load_df(fp, rename_pStrategy=True, fpi=None, grep_fpi=b'"Iter":1000000,'):
+def load_df_end(fp, rename_pStrategy=True, fpi=None, grep_fpi=b'"Iter":1000000,'):
     if fpi and os.path.isfile(fpi):
         if os.path.isfile(fp):
             if input('File already exist. Press ENTER to overwrite...' ) != '':
@@ -491,7 +491,7 @@ def load_df(fp, rename_pStrategy=True, fpi=None, grep_fpi=b'"Iter":1000000,'):
             for i,x in enumerate(gzip.open(fpi)):
                 if (i+1) % 10000 == 0:
                     ds_parse.update_progress(i+1,prefix=fpi+' - ')
-                if grep_fpi in x:
+                if b'"Iter":1000000,' in x or b'"Iter":950000,' in x:
                     f.write(x)
             len_text = ds_parse.update_progress(i+1,prefix=fpi+' - ')
             sys.stdout.write("\r" + " "*len_text + "\r")
