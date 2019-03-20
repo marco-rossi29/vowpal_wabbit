@@ -1,7 +1,8 @@
-import numpy as np
 from vowpalwabbit.pyvw import vw
 import multiprocessing, os, sys
 from string import ascii_lowercase
+from scipy.stats import beta
+import numpy as np
 
 class Command:
     def __init__(self, base, cb_type=None, marginal_list=None, ignore_list=None, interaction_list=None, regularization=None, learning_rate=None, power_t=None, clone_from=None):
@@ -69,40 +70,29 @@ class Command:
 
 def run_experiment(args_tuple):
 
-    cmd_str, recorded_prob_type, rnd_seed, zero_one_cost = args_tuple
+    num_customers, num_actions, ctr_good, ctr_bad, rnd_seed = args_tuple
 
     np.random.seed(rnd_seed)
 
-    num_customers = 100000
-    num_actions = int(cmd_str.split(' ')[1])
-    ctr_all = [0.04, 0.03]
-
-    customer_types = {x:i+1 for i,x in enumerate(ascii_lowercase[:num_actions])}
+    customer_types = {x:i for i,x in enumerate(ascii_lowercase[:num_actions])}
+    c_list = list(customer_types.keys())
     
-    actions = list(range(1, num_actions+1))
     p_uniform_random = 1.0/float(num_actions)
+    p_list = [p_uniform_random for _ in customer_types]
 
-    model = vw(cmd_str+' --quiet')
-        
+    counters = {x: [[1,1] for _ in range(num_actions)] for x in customer_types}
+    
+    ctr_all = [ctr_good, ctr_bad]
+    
     num_clicks = 0
     h = [0, 0]
     for icustomer in range(num_customers):
 
         # Get customer
-        customer_type = np.random.choice(customer_types.keys(), p=[p_uniform_random for _ in customer_types])
+        customer_type = np.random.choice(c_list, p=p_list)
 
-        # Ask VW which action to show this customer
-        s = '| {}'.format(customer_type)
-        ex = model.example(s)
-        probs = model.predict(ex)
-        ex.finish()
-        
-        s = sum(probs)
-        probs = [prob/s for prob in probs] # Necessary b/c need to sum to 1 for python
-
-        ichoice = np.random.choice(range(len(actions)), p=probs)
-        action = actions[ichoice]
-        prob = probs[ichoice]
+        # Ask which action to show this customer
+        action = max(((i, beta.ppf(.95, x[0]+1, x[1])) for i,x in enumerate(counters[customer_type])),key=lambda y : y[1])[0]
 
         # Did the customer click?
         if customer_types[customer_type] == action:
@@ -114,78 +104,20 @@ def run_experiment(args_tuple):
 
         clicked = np.random.choice([True, False], p=[ctr, 1.0 - ctr])
 
-
-        # Learn
-        if recorded_prob_type == 1:
-            prob = p_uniform_random
-        elif recorded_prob_type == 2:
-            prob = max(prob, 0.5)
-        elif recorded_prob_type == 3:
-            prob = max(prob, 0.2)
-        elif recorded_prob_type == 4:
-            prob = max(prob, 0.75)
-        elif recorded_prob_type == 6:
-            prob = max(prob, 0.9)
-        elif recorded_prob_type == 7:
-            prob = .9
-        elif recorded_prob_type == 5:
-            if prob > 0.5:
-                prob = 0.6
-            else:
-                prob = 0.4
-        elif recorded_prob_type == 8:
-            if prob > 0.5:
-                prob = 0.8
-            else:
-                prob = 0.2
-        elif recorded_prob_type == 9:
-            prob = min(prob, 0.5)
-        elif recorded_prob_type == 10:
-            if prob > 0.5:
-                prob = 0.55
-            else:
-                prob = 0.45
-        elif recorded_prob_type == 11:
-            if prob > 0.5:
-                prob = 0.5
-            else:
-                prob = 0.4
-        elif recorded_prob_type == 12:
-            if prob > 0.5:
-                prob = 0.6
-            else:
-                prob = 0.5
-        elif recorded_prob_type == 13:
-            prob = .5
-        
-        if zero_one_cost == 1:
-            cost = 0.0 if clicked else 1.0
-        else:
-            cost = -1.0 if clicked else 0.0
-
-        event = '{}:{}:{} | {}'.format(action, cost, prob, customer_type)
-        ex = model.example(event)
-        model.learn(ex)
-        ex.finish()
-
-        # Save results
+        # update stats
         if clicked:
+            counters[customer_type][action][0] += 1
             num_clicks += 1
+        else:
+            counters[customer_type][action][1] += 1
             
-        # if (icustomer+1) % 100000 == 0:
-            # print(num_clicks, icustomer+1, sum(ctr_all[i]*float(x)/float(icustomer+1) for i,x in enumerate(h)), float(num_clicks)/float(icustomer+1), h, [float(x)/float(icustomer+1) for x in h])
-
-        # x = sorted([(model.get_weight(i),i) for i in range(model.num_weights()) if np.abs(model.get_weight(i)) > 1e-5])
-        # print('---------------------------------------')
-        # for y in x:
-            # print(y)
-        # print('---------------------------------------')
+        if (icustomer+1) % 10000 == 0:
+            print(num_clicks, icustomer+1, sum(ctr_all[i]*float(x)/float(icustomer+1) for i,x in enumerate(h)), float(num_clicks)/float(icustomer+1), h, [float(x)/float(icustomer+1) for x in h])
     
-    s = '\t'.join(map(str, cmd_str.split(' ')[1::2] + [recorded_prob_type, rnd_seed, zero_one_cost, sum(ctr_all[i]*float(x)/float(icustomer+1) for i,x in enumerate(h)), float(num_clicks)/float(icustomer+1), num_clicks, icustomer+1] + h))
-    print(s)
-    model.finish()
+    # s = '\t'.join(map(str, [rnd_seed, sum(ctr_all[i]*float(x)/float(icustomer+1) for i,x in enumerate(h)), float(num_clicks)/float(icustomer+1), num_clicks, icustomer+1] + h))
+    # print(s)
 
-    return s
+    # return s
     
 def run_experiment_set(command_list, n_proc, fp):
     print('Num of sim:',len(command_list))
