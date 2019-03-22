@@ -69,7 +69,7 @@ class Command:
 
 def run_experiment(args_tuple):
 
-    num_customers, num_actions, ctr_good, ctr_bad, rnd_seed = args_tuple
+    num_iter, num_actions, ctr_good, ctr_bad, c_level, rnd_seed = args_tuple
 
     np.random.seed(rnd_seed)
 
@@ -79,7 +79,7 @@ def run_experiment(args_tuple):
     p_uniform_random = 1.0/float(num_actions)
     p_list = [p_uniform_random for _ in customer_types]
 
-    counters = {x: [[1,1] for _ in range(num_actions)] for x in customer_types}
+    counters = {x: [[1,1,1] for _ in range(num_actions)] for x in customer_types}
     
     ctr_all = [ctr_good, ctr_bad]
     
@@ -88,13 +88,13 @@ def run_experiment(args_tuple):
     
     output = []
     
-    for icustomer in range(num_customers):
+    for iter in range(1,num_iter+1):
 
         # Get customer
         customer_type = np.random.choice(c_list, p=p_list)
 
         # Ask which action to show this customer
-        action = max(((i, beta.ppf(.95, x[0]+1, x[1])) for i,x in enumerate(counters[customer_type])),key=lambda y : y[1])[0]
+        action = max(((i, x[2]) for i,x in enumerate(counters[customer_type])),key=lambda y : y[1])[0]
 
         # Did the customer click?
         if customer_types[customer_type] == action:
@@ -112,9 +112,10 @@ def run_experiment(args_tuple):
             num_clicks += 1
         else:
             counters[customer_type][action][1] += 1
+        counters[customer_type][action][2] = beta.ppf(c_level, counters[customer_type][action][0]+1, counters[customer_type][action][1])
             
-        if (icustomer+1) % 50000 == 0:
-            output.append(','.join(map(str, [rnd_seed, num_clicks, icustomer+1, sum(ctr_all[i]*float(x)/float(icustomer+1) for i,x in enumerate(h)), float(num_clicks)/float(icustomer+1)] + h + [float(x)/float(icustomer+1) for x in h])))
+        if iter % 50000 == 0:
+            output.append(','.join(map(str, [rnd_seed, num_clicks, iter, sum(ctr_all[i]*float(x)/float(iter) for i,x in enumerate(h)), float(num_clicks)/float(iter)] + h + [float(x)/float(iter) for x in h])))
 
     return '\n'.join(output)
     
@@ -139,20 +140,26 @@ if __name__ == '__main__':
 
     # fp = r'/mnt/d/data/vw-python-bug/sim_code_good_v4_p0.04_2users_totalClip.txt'
     # fp = r'/mnt/c/Users/marossi/OneDrive - Microsoft/Data/cb_hyperparameters/sim_code_good_v4_p0.04_2users_totalClip.txt'
-    fp = r'C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_UCB.txt'
+    fp = r'C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_UCB_cl099.txt'
     
-    num_customers = 1000000
+    num_iter = 1000000
     num_actions = 10
     ctr_good = 0.04
     ctr_bad = 0.03
     num_proc = 43
+    c_level = 0.99
     
-    rnd_seed = 1
+    if not os.path.isfile(fp):
+        with open(fp, 'a') as f:
+            f.write('Seed,Clicks,Iter,CTRmath,CTR,GoodActions,BadActions,GA_ratio,BA_ratio\n')
+    
+    
+    rnd_seed = 0
     command_list = []
     while True:
-        command_list.append((num_customers, num_actions, ctr_good, ctr_bad, rnd_seed))
+        command_list.append((num_iter, num_actions, ctr_good, ctr_bad, c_level, rnd_seed))
         
-        if len(command_list) == num_proc*3:
+        if len(command_list) == num_proc*5:
             print('Run iter:',rnd_seed)
             run_experiment_set(command_list, num_proc, fp)
             command_list = []
