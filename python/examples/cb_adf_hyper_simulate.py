@@ -72,7 +72,8 @@ def run_experiment(args_tuple):
 
     ml_args, num_actions, base_cost, pStrategy, rnd_seed = args_tuple
 
-    cmd_list = ['C:\\work\\bin\\Simulator_action-per-context_SINGLE\\PerformanceConsole.exe', ml_args]
+    # cmd_list = ['C:\\work\\bin\\Simulator_action-per-context_SINGLE\\PerformanceConsole.exe', ml_args]
+    cmd_list = ['C:\\work\\bin\\Simulator_action-per-context_SINGLE_submodule94e2dbe9_Prob1_error_fix\\PerformanceConsole.exe', ml_args]
     cmd_list += ('{} 0.03 0.04 {} {} 1000000 50000 {}'.format(num_actions, base_cost, pStrategy, rnd_seed)).split(' ')
     
     try:
@@ -123,10 +124,13 @@ if __name__ == '__main__':
         for x in (gzip.open(fp, 'rt') if fp.endswith('.gz') else open(fp)):
             lines[1] += 1
             
-            if ',"Iter":100000,' in x:
+            if ',1000000,' in x:
                 lines[0] += 1
-                already_done.add(x.split(',"Iter"',1)[0])
-        print('Total lines: {}\nIter1M lines: {}\nIter1M unique: {}'.format(lines[1],lines[0],len(already_done)))        
+                already_done.add(x.split(',',1)[0])
+        print('Total lines: {}\nIter1M lines: {}\nIter1M unique: {}'.format(lines[1],lines[0],len(already_done)))
+    else:
+        with (gzip.open(fp, 'at') if fp.endswith('.gz') else open(fp, 'a')) as f:
+            f.write('MLargs,numActions,baseCost,pStrategy,rewardSeed,Iter,CTR,GoodActions,dA\n')
     
     # test a single experiment set
     # command = Command(base_cmd, learning_rate=0.005, power_t=0.5, cb_type='dr')
@@ -188,59 +192,62 @@ if __name__ == '__main__':
     else:
         recorded_prob_types = [0, 1, 2]
         baseCosts = [1.0, 0.0]
-        learning_rates = [1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100]
+        learning_rates = [5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100]
+        bag_vector = [5,10,15]
+        power_t_vec = [0, None]
         cb_types = ['dr', 'mtr', 'ips']
-        if num_actions > 0:
-            users_vec = [num_actions]
-        else:
-            users_vec = [2, 10]
+        marginal_list_vec = [[], ['X']]
         
-        # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
-        command_list = []
-        skipped = 0
-        for rnd_seed in range(rnd_seed_start_while_loop):
-            for num_actions in users_vec:
-                for baseCost in baseCosts:
-                    for pStrategy in recorded_prob_types:
-                        for cb_type in cb_types:
-                            for lr in learning_rates:                                   
-                                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type)
+        # # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
+        # command_list = []
+        # skipped = 0
+        # for rnd_seed in range(rnd_seed_start_while_loop):
+            # for bag in bag_vector:
+                # for baseCost in baseCosts:
+                    # for pStrategy in recorded_prob_types:
+                        # for cb_type in cb_types:
+                            # for lr in learning_rates:                                   
+                                # command = Command(base_cmd, learning_rate=lr, cb_type=cb_type)
 
-                                s = '{{"ml_args":"{}","numActions":{},"baseCost":{},"pStrategy":{},"rewardSeed":{}'.format(command.full_command, num_actions, baseCost, pStrategy, rnd_seed)
-                                # print(s)
-                                # input()
-                                if s not in already_done:
-                                    command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
-                                else:
-                                    skipped += 1
+                                # s = '{{"ml_args":"{}","numActions":{},"baseCost":{},"pStrategy":{},"rewardSeed":{}'.format(command.full_command, num_actions, baseCost, pStrategy, rnd_seed)
+                                # # print(s)
+                                # # input()
+                                # if s not in already_done:
+                                    # command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
+                                # else:
+                                    # skipped += 1
 
-                                if len(command_list) == num_sim and not dry_run:
-                                    run_experiment_set(command_list, num_proc, fp)
-                                    command_list = []
-        print(len(command_list),skipped)
-        if dry_run:
-            for x in command_list:
-                print(x)
-                input()
-            sys.exit()
-        run_experiment_set(command_list, num_proc, fp)
+                                # if len(command_list) == num_sim and not dry_run:
+                                    # run_experiment_set(command_list, num_proc, fp)
+                                    # command_list = []
+        # print(len(command_list),skipped)
+        # if dry_run:
+            # for x in command_list:
+                # print(x)
+                # input()
+            # sys.exit()
+        # run_experiment_set(command_list, num_proc, fp)
         
         print('Start while loop...')
         rnd_seed = rnd_seed_start_while_loop
         command_list = []
         while True:
-            for num_actions in users_vec:
-                for baseCost in baseCosts:
-                    for pStrategy in recorded_prob_types:
-                        for cb_type in cb_types:
-                            for lr in learning_rates:  
-                                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type)
+            for mar in marginal_list_vec:
+                for bag in bag_vector:
+                    for baseCost in baseCosts:
+                        for pStrategy in recorded_prob_types:
+                            for cb_type in cb_types:
+                                for lr in learning_rates:
+                                    for pt in power_t_vec:
+                                    
+                                        base_cmd2 = base_cmd + ' --bag ' + str(bag)
+                                        command = Command(base_cmd2, learning_rate=lr, cb_type=cb_type, power_t=pt, marginal_list=mar)
 
-                                command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
-                                
-                                if len(command_list) == num_sim:
-                                    run_experiment_set(command_list, num_proc, fp)
-                                    command_list = []
+                                        command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
+                                        
+                                        if len(command_list) == num_sim:
+                                            run_experiment_set(command_list, num_proc, fp)
+                                            command_list = []
             
             rnd_seed += 1
 
