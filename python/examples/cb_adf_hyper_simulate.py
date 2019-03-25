@@ -78,8 +78,8 @@ def run_experiment(args_tuple):
     
     try:
         x = check_output(cmd_list, stderr=STDOUT, universal_newlines=True)
-        if not x.startswith('{'):
-            x = x.split('\n',1)[1]
+        # if not x.startswith('{'):
+            # x = x.split('\n',1)[1]
         return x
     except Exception as e:
         print("Error for command {}: {}".format(' '.join(cmd_list), e))
