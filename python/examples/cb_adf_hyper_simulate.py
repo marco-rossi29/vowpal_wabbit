@@ -241,10 +241,9 @@ if __name__ == '__main__':
                                 for lr in learning_rates:
                                     for pt in power_t_vec:
                                     
-                                        if bag == 0:
-                                            base_cmd2 = base_cmd + ' --epsilon 0.05'
-                                        else:
-                                            base_cmd2 = base_cmd + ' --bag ' + str(bag)
+                                        base_cmd2 = base_cmd
+                                        if bag > 0:
+                                            base_cmd2 += ' --bag ' + str(bag)
                                         command = Command(base_cmd2, learning_rate=lr, cb_type=cb_type, power_t=pt, marginal_list=mar)
 
                                         s = ','.join(map(str, [command.full_command, num_actions, baseCost, pStrategy, rnd_seed]))
