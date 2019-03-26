@@ -126,7 +126,7 @@ if __name__ == '__main__':
             
             if ',1000000,' in x:
                 lines[0] += 1
-                already_done.add(x.split(',',1)[0])
+                already_done.add(x.split(',1000000,',1)[0])
         print('Total lines: {}\nIter1M lines: {}\nIter1M unique: {}'.format(lines[1],lines[0],len(already_done)))
     else:
         with (gzip.open(fp, 'at') if fp.endswith('.gz') else open(fp, 'a')) as f:
@@ -191,11 +191,11 @@ if __name__ == '__main__':
 
     else:
         recorded_prob_types = [0, 1, 2]
-        baseCosts = [1.0, 0.0]
-        learning_rates = [5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100]
-        bag_vector = [5,10,15]
+        baseCosts = [1, 0]
+        learning_rates = [1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100]
+        bag_vector = [5]
         power_t_vec = [0, None]
-        cb_types = ['dr', 'mtr', 'ips']
+        cb_types = ['dr', 'mtr']
         marginal_list_vec = [[], ['X']]
         
         # # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
@@ -231,6 +231,7 @@ if __name__ == '__main__':
         print('Start while loop...')
         rnd_seed = rnd_seed_start_while_loop
         command_list = []
+        skipped = 0
         while True:
             for mar in marginal_list_vec:
                 for bag in bag_vector:
@@ -240,16 +241,35 @@ if __name__ == '__main__':
                                 for lr in learning_rates:
                                     for pt in power_t_vec:
                                     
-                                        base_cmd2 = base_cmd + ' --bag ' + str(bag)
+                                        if bag == 0:
+                                            base_cmd2 = base_cmd + ' --epsilon 0.05'
+                                        else:
+                                            base_cmd2 = base_cmd + ' --bag ' + str(bag)
                                         command = Command(base_cmd2, learning_rate=lr, cb_type=cb_type, power_t=pt, marginal_list=mar)
 
-                                        command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
-                                        
-                                        if len(command_list) == num_sim:
+                                        s = ','.join(map(str, [command.full_command, num_actions, baseCost, pStrategy, rnd_seed]))
+                                        # print(s)
+                                        # input()
+                                        if s not in already_done:
+                                            command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
+                                        else:
+                                            skipped += 1
+
+                                        if len(command_list) == num_sim and not dry_run:
                                             run_experiment_set(command_list, num_proc, fp)
                                             command_list = []
             
             rnd_seed += 1
+            
+            if dry_run and rnd_seed == 10:
+                print(len(command_list),skipped)
+                for x in command_list:
+                    print(x)
+                    input()
+                break
 
+            
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -a 2 -p 43 -n 430 -r 10000 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\myFile_Actions2.txt.gz"
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --epsilon 0.05 --marginal A" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions2-10_marginal_noQ.txt"
+
+# python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --ignore ABU" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_marginal_pt_bag.txt" -a 10
