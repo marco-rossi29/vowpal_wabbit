@@ -97,9 +97,14 @@ def run_experiment_set(command_list, n_proc, fp):
         print(results[-1].split('\n')[-2])
 
 def result_writer(results, fp):
-    with (gzip.open(fp, 'at') if fp.endswith('.gz') else open(fp, 'a')) as f:
+    fp_all = fp + '.allLines.txt'
+    with (gzip.open(fp_all, 'at') if fp_all.endswith('.gz') else open(fp_all, 'a')) as f:
         for result in results:
             f.write(result)
+    with (gzip.open(fp, 'at') if fp.endswith('.gz') else open(fp, 'a')) as f:
+        for result in results:
+            z = [x for x in result.split('\n') if ',1000000,' in x]
+            f.write('\n'.join(z)+'\n')
 
 if __name__ == '__main__':
 
