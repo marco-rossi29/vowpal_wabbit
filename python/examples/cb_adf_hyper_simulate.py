@@ -195,13 +195,13 @@ if __name__ == '__main__':
             rnd_seed += 1
 
     else:
-        recorded_prob_types = [0, 1, 2]
+        recorded_prob_types = [0]
         baseCosts = [1, 0]
         learning_rates = [1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100]
-        bag_vector = [5]
+        bag_vector = [0, 5, 10, 15]    # bag=0 -> --epsilon 0.05
         power_t_vec = [0, None]
-        cb_types = ['dr', 'mtr']
-        marginal_list_vec = [[], ['X']]
+        cb_types = ['mtr', 'dr']
+        base_cmd_list = ['--cb_explore_adf --ignore XA -q UB', '--cb_explore_adf --ignore ABU']
         
         # # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         # command_list = []
@@ -238,34 +238,36 @@ if __name__ == '__main__':
         command_list = []
         skipped = 0
         while True:
-            for mar in marginal_list_vec:
-                for bag in bag_vector:
-                    for baseCost in baseCosts:
-                        for pStrategy in recorded_prob_types:
-                            for cb_type in cb_types:
-                                for lr in learning_rates:
-                                    for pt in power_t_vec:
-                                    
-                                        base_cmd2 = base_cmd
-                                        if bag > 0:
-                                            base_cmd2 += ' --bag ' + str(bag)
-                                        command = Command(base_cmd2, learning_rate=lr, cb_type=cb_type, power_t=pt, marginal_list=mar)
+            for base_cmd in base_cmd_list:
+                marginal_list_vec = [None, ['X']] if ' --ignore ABU' in base_cmd else [None]
+                for mar in marginal_list_vec:
+                    for bag in bag_vector:
+                        for baseCost in baseCosts:
+                            for pStrategy in recorded_prob_types:
+                                for cb_type in cb_types:
+                                    for lr in learning_rates:
+                                        for pt in power_t_vec:
+                                        
+                                            base_cmd2 = base_cmd
+                                            if bag > 0:
+                                                base_cmd2 += ' --bag ' + str(bag)
+                                            command = Command(base_cmd2, learning_rate=lr, cb_type=cb_type, power_t=pt, marginal_list=mar)
 
-                                        s = ','.join(map(str, [command.full_command, num_actions, baseCost, pStrategy, rnd_seed]))
-                                        # print(s)
-                                        # input()
-                                        if s not in already_done:
-                                            command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
-                                        else:
-                                            skipped += 1
+                                            s = ','.join(map(str, [command.full_command, num_actions, baseCost, pStrategy, rnd_seed]))
+                                            # print(s)
+                                            # input()
+                                            if s not in already_done:
+                                                command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
+                                            else:
+                                                skipped += 1
 
-                                        if len(command_list) == num_sim and not dry_run:
-                                            run_experiment_set(command_list, num_proc, fp)
-                                            command_list = []
+                                            if len(command_list) == num_sim and not dry_run:
+                                                run_experiment_set(command_list, num_proc, fp)
+                                                command_list = []
             
             rnd_seed += 1
             
-            if dry_run and rnd_seed == 10:
+            if dry_run and rnd_seed == 16:
                 print(len(command_list),skipped)
                 for x in command_list:
                     print(x)
@@ -277,3 +279,4 @@ if __name__ == '__main__':
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --epsilon 0.05 --marginal A" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions2-10_marginal_noQ.txt"
 
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --ignore ABU" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_marginal_pt_bag.txt" -a 10
+# python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -a 10 -p 44 -n 440 -b "--cb_explore_adf --ignore XA -q UB" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_ALL.txt"
