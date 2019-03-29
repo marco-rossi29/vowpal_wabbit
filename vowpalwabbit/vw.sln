@@ -75,6 +75,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "python", "python", "{5AF0EC
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "python27", "..\python\windows27\python27.vcxproj", "{7D381808-CC76-4A1A-A8E6-3F71278858BB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "simulator", "..\cs\examples\simulator\simulator.csproj", "{2A9C6717-3B6C-4DB7-A626-16C04FCFECCF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -430,6 +432,18 @@ Global
 		{7D381808-CC76-4A1A-A8E6-3F71278858BB}.Release|x64.ActiveCfg = Release|x64
 		{7D381808-CC76-4A1A-A8E6-3F71278858BB}.Release|x64.Build.0 = Release|x64
 		{7D381808-CC76-4A1A-A8E6-3F71278858BB}.Release|x86.ActiveCfg = Release|x64
+		{2A9C6717-3B6C-4DB7-A626-16C04FCFECCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A9C6717-3B6C-4DB7-A626-16C04FCFECCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A9C6717-3B6C-4DB7-A626-16C04FCFECCF}.Debug|x64.ActiveCfg = Debug|x64
+		{2A9C6717-3B6C-4DB7-A626-16C04FCFECCF}.Debug|x64.Build.0 = Debug|x64
+		{2A9C6717-3B6C-4DB7-A626-16C04FCFECCF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2A9C6717-3B6C-4DB7-A626-16C04FCFECCF}.Debug|x86.Build.0 = Debug|Any CPU
+		{2A9C6717-3B6C-4DB7-A626-16C04FCFECCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A9C6717-3B6C-4DB7-A626-16C04FCFECCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A9C6717-3B6C-4DB7-A626-16C04FCFECCF}.Release|x64.ActiveCfg = Release|Any CPU
+		{2A9C6717-3B6C-4DB7-A626-16C04FCFECCF}.Release|x64.Build.0 = Release|Any CPU
+		{2A9C6717-3B6C-4DB7-A626-16C04FCFECCF}.Release|x86.ActiveCfg = Release|Any CPU
+		{2A9C6717-3B6C-4DB7-A626-16C04FCFECCF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -439,5 +453,6 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8
+		SolutionGuid = {14CFCE53-7467-4021-BD9A-978C2FC5BCC8}
 	EndGlobalSection
 EndGlobal
