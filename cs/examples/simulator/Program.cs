@@ -1,77 +1,42 @@
-﻿using System;
-
 namespace simulator
 {
     class Program
     { 
-        private static readonly string help_string = "usage: simulator initial_random tot_iter mod_iter reward_seed vw_seed exp_iter num_contexts num_actions ml_args_snips";
+        private static readonly string help_string = "usage: simulator ml_args num_actions minP maxP baseCost pStrategy tot_iter mod_iter rnd_seed";
 
         static void Main(string[] args)
         {
-            string ml_args = args[0] + " --quiet";
+            string ml_args = args[0];
 
-            int initial_random;
             int tot_iter;
             int mod_iter;
-            int reward_seed;
-            ulong vw_seed;
-            int exp_iter;
-            int num_contexts;
+            int rnd_seed;
             int num_actions;
+            float minP;
+            float maxP;
+            float base_cost;
+            int p_strategy;
 
-            if (!int.TryParse(args[1], out initial_random))
-            {
-                Console.WriteLine(help_string);
+            if (!int.TryParse(args[1], out num_actions))
                 return;
-            }
-
-            if (!int.TryParse(args[2], out tot_iter))
-            {
-                Console.WriteLine(help_string);
+            if (!float.TryParse(args[2], out minP))
                 return;
-            }
-
-            if (!int.TryParse(args[3], out mod_iter))
-            {
-                Console.WriteLine(help_string);
+            if (!float.TryParse(args[3], out maxP))
                 return;
-            }
-
-            if (!int.TryParse(args[4], out reward_seed))
-            {
-                Console.WriteLine(help_string);
+            if (!float.TryParse(args[4], out base_cost))
                 return;
-            }
-
-            if (!ulong.TryParse(args[5], out vw_seed))
-            {
-                Console.WriteLine(help_string);
+            if (!int.TryParse(args[5], out p_strategy))
                 return;
-            }
-
-            if (!int.TryParse(args[6], out exp_iter))
-            {
-                Console.WriteLine(help_string);
+            if (!int.TryParse(args[6], out tot_iter))
                 return;
-            }
-
-            if (!int.TryParse(args[7], out num_contexts))
-            {
-                Console.WriteLine(help_string);
+            if (!int.TryParse(args[7], out mod_iter))
                 return;
-            }
-
-            if (!int.TryParse(args[8], out num_actions))
-            {
-                Console.WriteLine(help_string);
+            if (!int.TryParse(args[8], out rnd_seed))
                 return;
-            }
 
-            string ml_args_snips = "--cb_explore_adf --epsilon .05 --cb_type mtr -l 1e-8 --power_t 0 --quiet";
-            if (args.Length > 9)
-                ml_args_snips = args[9] + " --quiet";
+            int num_contexts = num_actions;
 
-            VowpalWabbitSimulator.Run(ml_args, initial_random, tot_iter, mod_iter, reward_seed, vw_seed, exp_iter, num_contexts, num_actions, ml_args_snips);
+            VowpalWabbitSimulator.Run(ml_args, tot_iter, mod_iter, rnd_seed, num_contexts, num_actions, minP, maxP, base_cost, p_strategy);
         }
     }
 }
