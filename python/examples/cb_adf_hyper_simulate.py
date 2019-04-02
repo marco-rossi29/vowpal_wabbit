@@ -195,13 +195,13 @@ if __name__ == '__main__':
             rnd_seed += 1
 
     else:
-        recorded_prob_types = [0]
-        baseCosts = [1, 0]
-        learning_rates = [1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100]
-        bag_vector = [0, 5, 10, 15]    # bag=0 -> --epsilon 0.05
-        power_t_vec = [0, None]
-        cb_types = ['mtr', 'dr']
         base_cmd_list = ['--cb_explore_adf --ignore XA -q UB', '--cb_explore_adf --ignore ABU']
+        learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
+        recorded_prob_types = [0, 1, 2]
+        cb_types = ['mtr', 'dr', 'ips']
+        baseCosts_d = {x:[1,0] for x in cb_types}
+        bag_d = {x:[0,5,10,15] for x in cb_types}    # bag=0 -> --epsilon 0.05
+        power_t_vec = {x:[0, None] for x in cb_types}
         
         # # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         # command_list = []
@@ -241,12 +241,12 @@ if __name__ == '__main__':
             for base_cmd in base_cmd_list:
                 marginal_list_vec = [None, ['X']] if ' --ignore ABU' in base_cmd else [None]
                 for mar in marginal_list_vec:
-                    for bag in bag_vector:
-                        for baseCost in baseCosts:
-                            for pStrategy in recorded_prob_types:
-                                for cb_type in cb_types:
-                                    for lr in learning_rates:
-                                        for pt in power_t_vec:
+                    for cb_type in cb_types:
+                        for bag in bag_d[cb_type]:
+                            for baseCost in baseCosts_d[cb_type]:
+                                for pt in power_t_vec[cb_type]:
+                                    for pStrategy in recorded_prob_types:
+                                        for lr in learning_rates:
                                         
                                             base_cmd2 = base_cmd
                                             if bag > 0:
@@ -266,8 +266,14 @@ if __name__ == '__main__':
                                                 command_list = []
             
             rnd_seed += 1
+            if rnd_seed == 4:
+                baseCosts_d = {'ips':[0], 'dr':[1,0], 'mtr':[1,0]}
+                bag_d = {'ips':[0], 'dr':[0, 5, 10, 15], 'mtr':[0, 5, 10, 15]}    # bag=0 -> --epsilon 0.05
+                power_t_vec = {'ips':[0, None], 'dr':[0], 'mtr':[0]}
+            elif rnd_seed == 10:
+                bag_d = {'ips':[0], 'dr':[0, 5], 'mtr':[0, 5]}    # bag=0 -> --epsilon 0.05
             
-            if dry_run and rnd_seed == 16:
+            if dry_run and rnd_seed == 12:
                 print(len(command_list),skipped)
                 for x in command_list:
                     print(x)
@@ -279,4 +285,4 @@ if __name__ == '__main__':
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --epsilon 0.05 --marginal A" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions2-10_marginal_noQ.txt"
 
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --ignore ABU" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_marginal_pt_bag.txt" -a 10
-# python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -a 10 -p 44 -n 440 -b "--cb_explore_adf --ignore XA -q UB" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_ALL.txt"
+# python "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\cb_adf_hyper_simulate.py" -a 10 -p 44 -n 220 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_ALL.txt"
