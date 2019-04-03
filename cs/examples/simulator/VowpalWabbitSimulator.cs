@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using VW;
 using VW.Labels;
+using System.Diagnostics;
 
 namespace simulator
 {
@@ -82,6 +83,9 @@ namespace simulator
 
         public static void Run(string ml_args, int tot_iter, int mod_iter, int rnd_seed, int numContexts, int numActions, float minP, float maxP, float baseCost, int pStrategy)
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             // byte buffer outside so one can change the example and keep the memory around
             var exampleBuffer = new byte[32 * 1024];
 
@@ -221,6 +225,8 @@ namespace simulator
                     }
                 }
             }
+            stopwatch.Stop();
+            Console.WriteLine("Elapsed time: {0}",stopwatch.Elapsed);
         }
     }
 }
