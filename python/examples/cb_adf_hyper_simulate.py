@@ -195,7 +195,8 @@ if __name__ == '__main__':
             rnd_seed += 1
 
     else:
-        base_cmd_list = ['--cb_explore_adf --ignore XA -q UB', '--cb_explore_adf --ignore ABU']
+        base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB', '--cb_explore_adf --ignore ABU']
+        #base_cmd_list = ['--cb_explore_adf --ignore ABU']
         learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
         recorded_prob_types = [0, 1, 2]
         cb_types = ['mtr', 'dr', 'ips']
@@ -264,21 +265,23 @@ if __name__ == '__main__':
                                             if len(command_list) == num_sim and not dry_run:
                                                 run_experiment_set(command_list, num_proc, fp)
                                                 command_list = []
-            
+                        
+            if dry_run:
+                print(rnd_seed,len(command_list),skipped)
+                # for x in command_list:
+                    # print(x)
+                    # input()
+                if rnd_seed == 30:
+                    break
+                
             rnd_seed += 1
-            if rnd_seed == 4:
-                baseCosts_d = {'ips':[0], 'dr':[1,0], 'mtr':[1,0]}
-                bag_d = {'ips':[0], 'dr':[0, 5, 10, 15], 'mtr':[0, 5, 10, 15]}    # bag=0 -> --epsilon 0.05
-                power_t_vec = {'ips':[0, None], 'dr':[0], 'mtr':[0]}
-            elif rnd_seed == 10:
-                bag_d = {'ips':[0], 'dr':[0, 5], 'mtr':[0, 5]}    # bag=0 -> --epsilon 0.05
-            
-            if dry_run and rnd_seed == 12:
-                print(len(command_list),skipped)
-                for x in command_list:
-                    print(x)
-                    input()
-                break
+            if rnd_seed == 10:
+                # baseCosts_d = {'ips':[0], 'dr':[1,0], 'mtr':[1,0]}
+                # bag_d = {'ips':[0], 'dr':[0, 5, 10, 15], 'mtr':[0, 5, 10, 15]}    # bag=0 -> --epsilon 0.05
+                # power_t_vec = {'ips':[0, None], 'dr':[0], 'mtr':[0]}
+                cb_types = ['mtr', 'dr']
+            # elif rnd_seed == 10:
+                # bag_d = {'ips':[0], 'dr':[0, 5], 'mtr':[0, 5]}    # bag=0 -> --epsilon 0.05
 
             
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -a 2 -p 43 -n 430 -r 10000 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\myFile_Actions2.txt.gz"
