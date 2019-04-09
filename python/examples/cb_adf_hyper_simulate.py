@@ -72,8 +72,8 @@ def run_experiment(args_tuple):
 
     ml_args, num_actions, base_cost, pStrategy, rnd_seed = args_tuple
 
-    # cmd_list = ['C:\\work\\bin\\Simulator_action-per-context_SINGLE\\PerformanceConsole.exe', ml_args]
-    cmd_list = ['C:\\work\\bin\\Simulator_action-per-context_SINGLE_submodule94e2dbe9_Prob1_error_fix\\PerformanceConsole.exe', ml_args]
+    cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v2_861_latest_10a280447fa35f\\simulator.exe', ml_args]
+    #cmd_list = ['C:\\work\\bin\\Simulator_action-per-context_SINGLE_submodule94e2dbe9_Prob1_error_fix\\PerformanceConsole.exe', ml_args]
     cmd_list += ('{} 0.03 0.04 {} {} 1000000 50000 {}'.format(num_actions, base_cost, pStrategy, rnd_seed)).split(' ')
     
     try:
@@ -197,12 +197,12 @@ if __name__ == '__main__':
     else:
         base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB', '--cb_explore_adf --ignore ABU']
         #base_cmd_list = ['--cb_explore_adf --ignore ABU']
-        learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
-        recorded_prob_types = [0, 1, 2]
+        learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5]
+        recorded_prob_types = [0]
         cb_types = ['mtr', 'dr', 'ips']
         baseCosts_d = {x:[1,0] for x in cb_types}
-        bag_d = {x:[0,5,10,15] for x in cb_types}    # bag=0 -> --epsilon 0.05
-        power_t_vec = {x:[0, None] for x in cb_types}
+        bag_d = {x:[0,5,10] for x in cb_types}    # bag=0 -> --epsilon 0.05
+        power_t_vec = {x:[0] for x in cb_types}
         
         # # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         # command_list = []
@@ -240,7 +240,7 @@ if __name__ == '__main__':
         skipped = 0
         while True:
             for base_cmd in base_cmd_list:
-                marginal_list_vec = [None, ['X']] if ' --ignore ABU' in base_cmd else [None]
+                marginal_list_vec = [None]#, ['X']] if ' --ignore ABU' in base_cmd else [None]
                 for mar in marginal_list_vec:
                     for cb_type in cb_types:
                         for bag in bag_d[cb_type]:
@@ -275,8 +275,8 @@ if __name__ == '__main__':
                     break
                 
             rnd_seed += 1
-            if rnd_seed == 10:
-                # baseCosts_d = {'ips':[0], 'dr':[1,0], 'mtr':[1,0]}
+            if rnd_seed == 5:
+                baseCosts_d = {'ips':[0], 'dr':[1], 'mtr':[1]}
                 # bag_d = {'ips':[0], 'dr':[0, 5, 10, 15], 'mtr':[0, 5, 10, 15]}    # bag=0 -> --epsilon 0.05
                 # power_t_vec = {'ips':[0, None], 'dr':[0], 'mtr':[0]}
                 cb_types = ['mtr', 'dr']
