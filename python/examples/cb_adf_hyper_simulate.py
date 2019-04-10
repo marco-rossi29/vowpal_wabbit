@@ -1,5 +1,5 @@
 import numpy as np
-import multiprocessing, os, sys, argparse, gzip
+import multiprocessing, os, sys, argparse, gzip, datetime
 from subprocess import check_output, STDOUT
 
 class Command:
@@ -88,6 +88,7 @@ def run_experiment(args_tuple):
 def run_experiment_set(command_list, n_proc, fp):
     print('Num of sim:',len(command_list))
     if len(command_list) > 0:
+        t0 = datetime.datetime.now()
         # Run the experiments in parallel using n_proc processes
         p = multiprocessing.Pool(n_proc)
         results = p.map(run_experiment, command_list, chunksize=1)
@@ -95,7 +96,8 @@ def run_experiment_set(command_list, n_proc, fp):
         p.join()
         del p
         result_writer(results, fp)
-        print(results[-1].split('\n')[-2])
+        t1 = datetime.datetime.now()
+        print(results[-1].splitlines()[-1],' - {} - Elapsed: {}'.format(t1,t1-t0))
 
 def result_writer(results, fp):
     fp_all = fp + '.allLines.txt'
@@ -104,7 +106,7 @@ def result_writer(results, fp):
             f.write(result)
     with (gzip.open(fp, 'at') if fp.endswith('.gz') else open(fp, 'a')) as f:
         for result in results:
-            z = [x for x in result.split('\n') if ',1000000,' in x]
+            z = [x for x in result.splitlines() if ',1000000,' in x]
             f.write('\n'.join(z)+'\n')
 
 if __name__ == '__main__':
