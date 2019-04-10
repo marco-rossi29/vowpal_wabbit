@@ -247,27 +247,31 @@ if __name__ == '__main__':
                 for mar in marginal_list_vec:
                     for cb_type in cb_types:
                         for bag in bag_d[cb_type]:
-                            for baseCost in baseCosts_d[cb_type]:
-                                for pt in power_t_vec[cb_type]:
-                                    for pStrategy in recorded_prob_types:
-                                        for lr in learning_rates:
-                                        
-                                            base_cmd2 = base_cmd
-                                            if bag > 0:
-                                                base_cmd2 += ' --bag ' + str(bag)
-                                            command = Command(base_cmd2, learning_rate=lr, cb_type=cb_type, power_t=pt, marginal_list=mar)
+                            greedify_vec = [False, True] if bag > 0 else [False]
+                            for do_greedify in greedify_vec:
+                                for baseCost in baseCosts_d[cb_type]:
+                                    for pt in power_t_vec[cb_type]:
+                                        for pStrategy in recorded_prob_types:
+                                            for lr in learning_rates:
 
-                                            s = ','.join(map(str, [command.full_command, num_actions, baseCost, pStrategy, rnd_seed]))
-                                            # print(s)
-                                            # input()
-                                            if s not in already_done:
-                                                command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
-                                            else:
-                                                skipped += 1
+                                                base_cmd2 = base_cmd
+                                                if bag > 0:
+                                                    base_cmd2 += ' --bag ' + str(bag)
+                                                    if do_greedify:
+                                                        base_cmd2 += ' --greedify'
+                                                command = Command(base_cmd2, learning_rate=lr, cb_type=cb_type, power_t=pt, marginal_list=mar)
 
-                                            if len(command_list) == num_sim and not dry_run:
-                                                run_experiment_set(command_list, num_proc, fp)
-                                                command_list = []
+                                                s = ','.join(map(str, [command.full_command, num_actions, baseCost, pStrategy, rnd_seed]))
+                                                # print(s)
+                                                # input()
+                                                if s not in already_done:
+                                                    command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
+                                                else:
+                                                    skipped += 1
+
+                                                if len(command_list) == num_sim and not dry_run:
+                                                    run_experiment_set(command_list, num_proc, fp)
+                                                    command_list = []
                         
             if dry_run:
                 print(rnd_seed,len(command_list),skipped)
@@ -291,4 +295,4 @@ if __name__ == '__main__':
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --epsilon 0.05 --marginal A" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions2-10_marginal_noQ.txt"
 
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --ignore ABU" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_marginal_pt_bag.txt" -a 10
-# python "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\cb_adf_hyper_simulate.py" -a 10 -p 44 -n 220 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_ALL.txt"
+# python "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\cb_adf_hyper_simulate.py" -a 10 -p 44 -n 440 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_ALL.txt"
