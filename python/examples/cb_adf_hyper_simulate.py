@@ -89,6 +89,9 @@ def run_experiment_set(command_list, n_proc, fp):
     print('Num of sim:',len(command_list))
     if len(command_list) > 0:
         t0 = datetime.datetime.now()
+        print('Current time: {}'.format(t0))
+        command_list.sort(key=lambda x : (x[1], int(x[0].split(' --bag ',1)[1].split(' ',1)[0]) if ' --bag ' in x[0] else 1), reverse=True)
+
         # Run the experiments in parallel using n_proc processes
         p = multiprocessing.Pool(n_proc)
         results = p.map(run_experiment, command_list, chunksize=1)
@@ -96,8 +99,7 @@ def run_experiment_set(command_list, n_proc, fp):
         p.join()
         del p
         result_writer(results, fp)
-        t1 = datetime.datetime.now()
-        print(results[-1].splitlines()[-1],' - {} - Elapsed: {}'.format(t1,t1-t0))
+        print('Elapsed: {} - Last cmd: {}'.format(datetime.datetime.now()-t0, results[-1].splitlines()[-1]))
 
 def result_writer(results, fp):
     fp_all = fp + '.allLines.txt'
@@ -198,14 +200,14 @@ if __name__ == '__main__':
             rnd_seed += 1
 
     else:
-        base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB', '--cb_explore_adf --ignore ABU']
+        base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB']#, '--cb_explore_adf --ignore XA -q UB', '--cb_explore_adf --ignore ABU']
         #base_cmd_list = ['--cb_explore_adf --ignore ABU']
         learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
-        recorded_prob_types = [0]
-        cb_types = ['mtr', 'dr']
+        recorded_prob_types = [0,2]
+        cb_types = ['mtr']
         baseCosts_d = {x:[1,0] for x in cb_types}
         bag_d = {x:[0,5,10] for x in cb_types}    # bag=0 -> --epsilon 0.05
-        power_t_vec = {x:[0, None] for x in cb_types}
+        power_t_vec = {x:[0] for x in cb_types}
         
         # # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         # command_list = []
@@ -282,11 +284,11 @@ if __name__ == '__main__':
                     break
                 
             rnd_seed += 1
-            if rnd_seed == 5:
+            # if rnd_seed == 5:
                 #baseCosts_d = {'ips':[0], 'dr':[1], 'mtr':[1]}
                 # bag_d = {'ips':[0], 'dr':[0, 5, 10, 15], 'mtr':[0, 5, 10, 15]}    # bag=0 -> --epsilon 0.05
                 # power_t_vec = {'ips':[0, None], 'dr':[0], 'mtr':[0]}
-                cb_types = ['mtr', 'dr']
+                # cb_types = ['mtr', 'dr']
             # elif rnd_seed == 10:
                 # bag_d = {'ips':[0], 'dr':[0, 5], 'mtr':[0, 5]}    # bag=0 -> --epsilon 0.05
 
@@ -295,4 +297,4 @@ if __name__ == '__main__':
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --epsilon 0.05 --marginal A" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions2-10_marginal_noQ.txt"
 
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --ignore ABU" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_marginal_pt_bag.txt" -a 10
-# python "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\cb_adf_hyper_simulate.py" -a 10 -p 44 -n 440 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_ALL.txt"
+# python "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\cb_adf_hyper_simulate.py" -a 10 -p 44 -n 440 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_ALL-Simulator_v2_861_latest_10a280447fa35f.txt"
