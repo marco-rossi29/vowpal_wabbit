@@ -176,6 +176,9 @@ namespace simulator
                             case 13:
                                 pReported = 0.5f;
                                 break;
+                            case 14:
+                                pReported = Math.Max(pReported, 0.1f);
+                                break;
                         }
 
                         ex.Examples[topAction].Label = new ContextualBanditLabel((uint)topAction, cost, pReported);
