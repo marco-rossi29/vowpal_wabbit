@@ -72,7 +72,7 @@ def run_experiment(args_tuple):
 
     ml_args, num_actions, base_cost, pStrategy, rnd_seed = args_tuple
 
-    cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v2_861_latest_10a280447fa35f\\simulator.exe', ml_args]
+    cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v2_861_latest2_24e4ea4b7a41\\simulator.exe', ml_args]
     #cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v2_840_msft_3b64d7f7e2\\simulator.exe', ml_args]
     #cmd_list = ['C:\\work\\bin\\Simulator_action-per-context_SINGLE_submodule94e2dbe9_Prob1_error_fix\\PerformanceConsole.exe', ml_args]
     cmd_list += ('{} 0.03 0.04 {} {} 1000000 50000 {}'.format(num_actions, base_cost, pStrategy, rnd_seed)).split(' ')
@@ -203,8 +203,8 @@ if __name__ == '__main__':
         base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB']#, '--cb_explore_adf --ignore XA -q UB', '--cb_explore_adf --ignore ABU']
         #base_cmd_list = ['--cb_explore_adf --ignore ABU']
         learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
-        recorded_prob_types = [0,2]
-        cb_types = ['mtr']
+        recorded_prob_types = [0,1,2,14]
+        cb_types = ['mtr', 'dr']
         baseCosts_d = {x:[1,0] for x in cb_types}
         bag_d = {x:[0,5,10] for x in cb_types}    # bag=0 -> --epsilon 0.05
         power_t_vec = {x:[0] for x in cb_types}
@@ -249,46 +249,50 @@ if __name__ == '__main__':
                 for mar in marginal_list_vec:
                     for cb_type in cb_types:
                         for bag in bag_d[cb_type]:
-                            greedify_vec = [False, True] if bag > 0 else [False]
+                            greedify_vec = [True] if bag > 0 else [False]
+                            add_eps_vec = [True, False] if bag > 0 else [False]
                             for do_greedify in greedify_vec:
-                                for baseCost in baseCosts_d[cb_type]:
-                                    for pt in power_t_vec[cb_type]:
-                                        for pStrategy in recorded_prob_types:
-                                            for lr in learning_rates:
+                                for add_eps in add_eps_vec:
+                                    for baseCost in baseCosts_d[cb_type]:
+                                        for pt in power_t_vec[cb_type]:
+                                            for pStrategy in recorded_prob_types:
+                                                for lr in learning_rates:
 
-                                                base_cmd2 = base_cmd
-                                                if bag > 0:
-                                                    base_cmd2 += ' --bag ' + str(bag)
-                                                    if do_greedify:
-                                                        base_cmd2 += ' --greedify'
-                                                command = Command(base_cmd2, learning_rate=lr, cb_type=cb_type, power_t=pt, marginal_list=mar)
+                                                    base_cmd2 = base_cmd
+                                                    if bag > 0:
+                                                        base_cmd2 += ' --bag ' + str(bag)
+                                                        if do_greedify:
+                                                            base_cmd2 += ' --greedify'
+                                                        if add_eps:
+                                                            base_cmd2 += ' --epsilon 0.05'
+                                                    command = Command(base_cmd2, learning_rate=lr, cb_type=cb_type, power_t=pt, marginal_list=mar)
 
-                                                s = ','.join(map(str, [command.full_command, num_actions, baseCost, pStrategy, rnd_seed]))
-                                                # print(s)
-                                                # input()
-                                                if s not in already_done:
-                                                    command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
-                                                else:
-                                                    skipped += 1
+                                                    s = ','.join(map(str, [command.full_command, num_actions, baseCost, pStrategy, rnd_seed]))
+                                                    # print(s)
+                                                    # input()
+                                                    if s not in already_done:
+                                                        command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
+                                                    else:
+                                                        skipped += 1
 
-                                                if len(command_list) == num_sim and not dry_run:
-                                                    run_experiment_set(command_list, num_proc, fp)
-                                                    command_list = []
+                                                    if len(command_list) == num_sim and not dry_run:
+                                                        run_experiment_set(command_list, num_proc, fp)
+                                                        command_list = []
                         
             if dry_run:
                 print(rnd_seed,len(command_list),skipped)
                 # for x in command_list:
                     # print(x)
                     # input()
-                if rnd_seed == 100:
+                if rnd_seed == 50:
                     break
                 
             rnd_seed += 1
-            # if rnd_seed == 5:
+            if rnd_seed == 4:
                 #baseCosts_d = {'ips':[0], 'dr':[1], 'mtr':[1]}
                 # bag_d = {'ips':[0], 'dr':[0, 5, 10, 15], 'mtr':[0, 5, 10, 15]}    # bag=0 -> --epsilon 0.05
                 # power_t_vec = {'ips':[0, None], 'dr':[0], 'mtr':[0]}
-                # cb_types = ['mtr', 'dr']
+                cb_types = ['mtr']
             # elif rnd_seed == 10:
                 # bag_d = {'ips':[0], 'dr':[0, 5], 'mtr':[0, 5]}    # bag=0 -> --epsilon 0.05
 
