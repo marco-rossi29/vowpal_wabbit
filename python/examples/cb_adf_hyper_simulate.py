@@ -103,13 +103,11 @@ def run_experiment_set(command_list, n_proc, fp):
 
 def result_writer(results, fp):
     fp_all = fp + '.allLines.txt'
-    with (gzip.open(fp_all, 'at') if fp_all.endswith('.gz') else open(fp_all, 'a')) as f:
+    with (gzip.open(fp_all, 'at') if fp_all.endswith('.gz') else open(fp_all, 'a')) as f, (gzip.open(fp, 'at') if fp.endswith('.gz') else open(fp, 'a')) as f2:
         for result in results:
             f.write(result)
-    with (gzip.open(fp, 'at') if fp.endswith('.gz') else open(fp, 'a')) as f:
-        for result in results:
             z = [x for x in result.splitlines() if ',1000000,' in x]
-            f.write('\n'.join(z)+'\n')
+            f2.write('\n'.join(z)+'\n')
 
 if __name__ == '__main__':
 
@@ -200,14 +198,26 @@ if __name__ == '__main__':
             rnd_seed += 1
 
     else:
-        base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB']#, '--cb_explore_adf --ignore XA -q UB', '--cb_explore_adf --ignore ABU']
+        base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB']#, '--cb_explore_adf --ignore ABU']
         #base_cmd_list = ['--cb_explore_adf --ignore ABU']
         learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
+        #[1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, .1, 1000]
         recorded_prob_types = [0,1,2,14]
-        cb_types = ['mtr', 'dr']
+        cb_types = ['dr', 'mtr']
         baseCosts_d = {x:[1,0] for x in cb_types}
-        bag_d = {x:[0,5,10] for x in cb_types}    # bag=0 -> --epsilon 0.05
         power_t_vec = {x:[0] for x in cb_types}
+        
+        params = ['',
+                  ' --bag 5',
+                  ' --bag 10',
+                  ' --bag 5 --epsilon 0.05',
+                  ' --bag 10 --epsilon 0.05',
+                  ' --bag 5 --greedify',
+                  ' --bag 10 --greedify',
+                  ' --bag 5 --greedify --epsilon 0.05',
+                  ' --bag 10 --greedify --epsilon 0.05']
+        
+        exploration_d = {x: params for x in cb_types}
         
         # # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         # command_list = []
@@ -248,53 +258,47 @@ if __name__ == '__main__':
                 marginal_list_vec = [None]#, ['X']] if ' --ignore ABU' in base_cmd else [None]
                 for mar in marginal_list_vec:
                     for cb_type in cb_types:
-                        for bag in bag_d[cb_type]:
-                            greedify_vec = [True] if bag > 0 else [False]
-                            add_eps_vec = [True, False] if bag > 0 else [False]
-                            for do_greedify in greedify_vec:
-                                for add_eps in add_eps_vec:
-                                    for baseCost in baseCosts_d[cb_type]:
-                                        for pt in power_t_vec[cb_type]:
-                                            for pStrategy in recorded_prob_types:
-                                                for lr in learning_rates:
+                        for exploration in exploration_d[cb_type]:
+                            psi_vec = [0.1, 1.0] if '--cover' in exploration else [None]
+                            for psi in psi_vec:
+                                for baseCost in baseCosts_d[cb_type]:
+                                    for pt in power_t_vec[cb_type]:
+                                        for pStrategy in recorded_prob_types:
+                                            for lr in learning_rates:
 
-                                                    base_cmd2 = base_cmd
-                                                    if bag > 0:
-                                                        base_cmd2 += ' --bag ' + str(bag)
-                                                        if do_greedify:
-                                                            base_cmd2 += ' --greedify'
-                                                        if add_eps:
-                                                            base_cmd2 += ' --epsilon 0.05'
-                                                    command = Command(base_cmd2, learning_rate=lr, cb_type=cb_type, power_t=pt, marginal_list=mar)
+                                                base_cmd2 = base_cmd + exploration
+                                                if psi is not None:
+                                                    base_cmd2 += ' --psi ' + str(psi)
 
-                                                    s = ','.join(map(str, [command.full_command, num_actions, baseCost, pStrategy, rnd_seed]))
-                                                    # print(s)
-                                                    # input()
-                                                    if s not in already_done:
-                                                        command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
-                                                    else:
-                                                        skipped += 1
+                                                command = Command(base_cmd2, learning_rate=lr, cb_type=cb_type, power_t=pt, marginal_list=mar)
 
-                                                    if len(command_list) == num_sim and not dry_run:
-                                                        run_experiment_set(command_list, num_proc, fp)
-                                                        command_list = []
+                                                s = ','.join(map(str, [command.full_command, num_actions, baseCost, pStrategy, rnd_seed]))
+                                                if s not in already_done:
+                                                    command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
+                                                else:
+                                                    skipped += 1
+
+                                                if len(command_list) == num_sim and not dry_run:
+                                                    run_experiment_set(command_list, num_proc, fp)
+                                                    command_list = []
                         
             if dry_run:
                 print(rnd_seed,len(command_list),skipped)
                 # for x in command_list:
                     # print(x)
                     # input()
-                if rnd_seed == 50:
+                if rnd_seed == 30:
                     break
                 
             rnd_seed += 1
-            if rnd_seed == 4:
+            # if rnd_seed == 5:
+                # base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB']
                 #baseCosts_d = {'ips':[0], 'dr':[1], 'mtr':[1]}
-                # bag_d = {'ips':[0], 'dr':[0, 5, 10, 15], 'mtr':[0, 5, 10, 15]}    # bag=0 -> --epsilon 0.05
+                # exploration_d = {'ips':[0], 'dr':[0, 5, 10, 15], 'mtr':[0, 5, 10, 15]}    # bag=0 -> --epsilon 0.05
                 # power_t_vec = {'ips':[0, None], 'dr':[0], 'mtr':[0]}
-                cb_types = ['mtr']
+                #cb_types = ['mtr', 'dr']
             # elif rnd_seed == 10:
-                # bag_d = {'ips':[0], 'dr':[0, 5], 'mtr':[0, 5]}    # bag=0 -> --epsilon 0.05
+                # exploration_d = {'ips':[0], 'dr':[0, 5], 'mtr':[0, 5]}    # bag=0 -> --epsilon 0.05
 
             
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -a 2 -p 43 -n 430 -r 10000 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\myFile_Actions2.txt.gz"
