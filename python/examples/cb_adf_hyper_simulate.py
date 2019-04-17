@@ -90,7 +90,7 @@ def run_experiment_set(command_list, n_proc, fp):
     if len(command_list) > 0:
         t0 = datetime.datetime.now()
         print('Current time: {}'.format(t0))
-        command_list.sort(key=lambda x : (x[1], int(x[0].split(' --bag ',1)[1].split(' ',1)[0]) if ' --bag ' in x[0] else 1), reverse=True)
+        command_list.sort(key=lambda x : (x[1], int(x[0].split(' --cover ',1)[1].split(' ',1)[0]) if ' --cover ' in x[0] else 1), reverse=True)
 
         # Run the experiments in parallel using n_proc processes
         p = multiprocessing.Pool(n_proc)
@@ -200,22 +200,14 @@ if __name__ == '__main__':
     else:
         base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB']#, '--cb_explore_adf --ignore ABU']
         #base_cmd_list = ['--cb_explore_adf --ignore ABU']
-        learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
-        #[1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, .1, 1000]
-        recorded_prob_types = [0,1,2,14]
+        learning_rates = [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, .1, 1000]
+        recorded_prob_types = [0,2]
         cb_types = ['dr', 'mtr']
         baseCosts_d = {x:[1,0] for x in cb_types}
         power_t_vec = {x:[0] for x in cb_types}
         
-        params = ['',
-                  ' --bag 5',
-                  ' --bag 10',
-                  ' --bag 5 --epsilon 0.05',
-                  ' --bag 10 --epsilon 0.05',
-                  ' --bag 5 --greedify',
-                  ' --bag 10 --greedify',
-                  ' --bag 5 --greedify --epsilon 0.05',
-                  ' --bag 10 --greedify --epsilon 0.05']
+        params = [' --cover 5',
+                  ' --cover 10']
         
         exploration_d = {x: params for x in cb_types}
         
@@ -259,7 +251,7 @@ if __name__ == '__main__':
                 for mar in marginal_list_vec:
                     for cb_type in cb_types:
                         for exploration in exploration_d[cb_type]:
-                            psi_vec = [0.1, 1.0] if '--cover' in exploration else [None]
+                            psi_vec = [0, 0.01, 0.1, 1.0] if '--cover' in exploration else [None]
                             for psi in psi_vec:
                                 for baseCost in baseCosts_d[cb_type]:
                                     for pt in power_t_vec[cb_type]:
