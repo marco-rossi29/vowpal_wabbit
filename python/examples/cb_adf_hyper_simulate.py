@@ -202,12 +202,12 @@ if __name__ == '__main__':
         #base_cmd_list = ['--cb_explore_adf --ignore ABU']
         learning_rates = [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, .1, 1000]
         recorded_prob_types = [0,2]
-        cb_types = ['dr', 'mtr']
+        cb_types = ['dr']
         baseCosts_d = {x:[1,0] for x in cb_types}
         power_t_vec = {x:[0] for x in cb_types}
         
-        params = [' --cover 5',
-                  ' --cover 10']
+        params = [' --cover 2',
+                  ' --cover 5']
         
         exploration_d = {x: params for x in cb_types}
         
