@@ -198,15 +198,17 @@ if __name__ == '__main__':
             rnd_seed += 1
 
     else:
-        base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB']#, '--cb_explore_adf --ignore ABU']
+        base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB', '--cb_explore_adf --ignore ABU']
         #base_cmd_list = ['--cb_explore_adf --ignore ABU']
-        learning_rates = [1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3]
+        # learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
+        learning_rates = [1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2]
         recorded_prob_types = [0,1,2,14]
-        cb_types = ['dr']
+        cb_types = ['dr','mtr']
         baseCosts_d = {x:[1,0] for x in cb_types}
         power_t_vec = {x:[0] for x in cb_types}
         
-        params = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['', ' --nounif']]
+        # params = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['', ' --nounif']]
+        params = [' --bag {}{}'.format(N,n) for N in [5, 10] for n in ['', ' --greedify']]
         
         exploration_d = {x: params for x in cb_types}
         
