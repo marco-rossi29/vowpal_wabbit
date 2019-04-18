@@ -200,16 +200,17 @@ if __name__ == '__main__':
     else:
         base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB']#, '--cb_explore_adf --ignore ABU']
         #base_cmd_list = ['--cb_explore_adf --ignore ABU']
-        learning_rates = [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, .1, 1000]
-        recorded_prob_types = [0,2]
+        learning_rates = [1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3]
+        recorded_prob_types = [0,1,2,14]
         cb_types = ['dr']
         baseCosts_d = {x:[1,0] for x in cb_types}
         power_t_vec = {x:[0] for x in cb_types}
         
-        params = [' --cover 2',
-                  ' --cover 5']
+        params = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['', ' --nounif']]
         
         exploration_d = {x: params for x in cb_types}
+        
+        psi_vec_cover = [0, 0.01, 0.1, 1.0]
         
         # # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         # command_list = []
@@ -251,7 +252,7 @@ if __name__ == '__main__':
                 for mar in marginal_list_vec:
                     for cb_type in cb_types:
                         for exploration in exploration_d[cb_type]:
-                            psi_vec = [0, 0.01, 0.1, 1.0] if '--cover' in exploration else [None]
+                            psi_vec = psi_vec_cover if '--cover' in exploration else [None]
                             for psi in psi_vec:
                                 for baseCost in baseCosts_d[cb_type]:
                                     for pt in power_t_vec[cb_type]:
@@ -279,19 +280,12 @@ if __name__ == '__main__':
                 # for x in command_list:
                     # print(x)
                     # input()
-                if rnd_seed == 30:
+                if rnd_seed == 20:
                     break
                 
             rnd_seed += 1
-            # if rnd_seed == 5:
-                # base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB']
-                #baseCosts_d = {'ips':[0], 'dr':[1], 'mtr':[1]}
-                # exploration_d = {'ips':[0], 'dr':[0, 5, 10, 15], 'mtr':[0, 5, 10, 15]}    # bag=0 -> --epsilon 0.05
-                # power_t_vec = {'ips':[0, None], 'dr':[0], 'mtr':[0]}
-                #cb_types = ['mtr', 'dr']
-            # elif rnd_seed == 10:
-                # exploration_d = {'ips':[0], 'dr':[0, 5], 'mtr':[0, 5]}    # bag=0 -> --epsilon 0.05
-
+            if rnd_seed == 5:      
+                psi_vec_cover = [0, 0.01]
             
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -a 2 -p 43 -n 430 -r 10000 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\myFile_Actions2.txt.gz"
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --epsilon 0.05 --marginal A" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions2-10_marginal_noQ.txt"
