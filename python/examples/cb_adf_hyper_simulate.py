@@ -83,14 +83,16 @@ def run_experiment(args_tuple):
             # x = x.split('\n',1)[1]
         return x
     except Exception as e:
-        print("Error for command {}: {}".format(' '.join(cmd_list), e))
+        err_str = 'Error for command {}: {}'.format(' '.join(cmd_list), e)
+        print(err_str)
+        return err_str
     
 def run_experiment_set(command_list, n_proc, fp):
     print('Num of sim:',len(command_list))
     if len(command_list) > 0:
         t0 = datetime.datetime.now()
         print('Current time: {}'.format(t0))
-        command_list.sort(key=lambda x : (x[1], int(x[0].split(' --cover ',1)[1].split(' ',1)[0]) if ' --cover ' in x[0] else 1), reverse=True)
+        command_list.sort(key=lambda x : (x[1], max((int(x[0].split(e,1)[1].split(' ',1)[0]) if e in x[0] else 1) for e in [' --bag ',' --cover '])), reverse=True)
 
         # Run the experiments in parallel using n_proc processes
         p = multiprocessing.Pool(n_proc)
@@ -105,9 +107,14 @@ def result_writer(results, fp):
     fp_all = fp + '.allLines.txt'
     with (gzip.open(fp_all, 'at') if fp_all.endswith('.gz') else open(fp_all, 'a')) as f, (gzip.open(fp, 'at') if fp.endswith('.gz') else open(fp, 'a')) as f2:
         for result in results:
-            f.write(result)
-            z = [x for x in result.splitlines() if ',1000000,' in x]
-            f2.write('\n'.join(z)+'\n')
+            if result.startswith('Error for command'):
+                with open(fp+'.errors.txt', 'a') as fe:
+                    fe.write(result+'\n')
+            else:
+                f.write(result)
+                z = [x for x in result.splitlines() if ',1000000,' in x]
+                f2.write('\n'.join(z)+'\n')
+
 
 if __name__ == '__main__':
 
