@@ -177,7 +177,7 @@ namespace simulator
                                 pReported = 0.5f;
                                 break;
                             case 14:
-                                pReported = Math.Max(pReported, 0.1f); ;
+                                pReported = Math.Max(pReported, 0.1f);
                                 break;
                         }
 
