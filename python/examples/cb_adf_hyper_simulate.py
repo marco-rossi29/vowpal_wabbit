@@ -205,7 +205,7 @@ if __name__ == '__main__':
             rnd_seed += 1
 
     else:
-        base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB', '--cb_explore_adf --ignore ABU']
+        base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB']#, '--cb_explore_adf --ignore ABU']
         #base_cmd_list = ['--cb_explore_adf --ignore ABU']
         # learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
         learning_rates = [1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2]
@@ -214,12 +214,13 @@ if __name__ == '__main__':
         baseCosts_d = {x:[1,0] for x in cb_types}
         power_t_vec = {x:[0] for x in cb_types}
         
-        # params = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['', ' --nounif']]
-        params = [' --bag {}{}'.format(N,n) for N in [5, 10] for n in ['', ' --greedify']]
+        params_cover = [' --cover {}{}{}'.format(N,n,m) for N in [2, 5] for n in ['', ' --nounif'] for m in ['', ' --noconstant']]
+        params_bag = [' --bag {}{}{}'.format(N,n,m) for N in [5, 10] for n in ['', ' --greedify'] for m in ['', ' --noconstant']]
         
-        exploration_d = {x: params for x in cb_types}
+        exploration_d = {'mtr': [''] + params_bag,
+                         'dr':  [''] + params_bag + params_cover}
         
-        psi_vec_cover = [0, 0.01, 0.1, 1.0]
+        psi_vec_cover = [0, 0.01]
         
         # # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         # command_list = []
@@ -293,8 +294,10 @@ if __name__ == '__main__':
                     break
                 
             rnd_seed += 1
-            if rnd_seed == 5:      
-                psi_vec_cover = [0, 0.01]
+            # if rnd_seed == 5:      
+                # psi_vec_cover = [0, 0.01]
+                # params = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['', ' --nounif']]
+                # exploration_d = {x: params for x in cb_types}
             
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -a 2 -p 43 -n 430 -r 10000 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\myFile_Actions2.txt.gz"
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --epsilon 0.05 --marginal A" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions2-10_marginal_noQ.txt"
