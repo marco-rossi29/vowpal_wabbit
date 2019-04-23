@@ -72,7 +72,8 @@ def run_experiment(args_tuple):
 
     ml_args, num_actions, base_cost, pStrategy, rnd_seed = args_tuple
 
-    cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v2_861_latest2_24e4ea4b7a41\\simulator.exe', ml_args]
+    # cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v2_861_latest2_24e4ea4b7a41\\simulator.exe', ml_args]
+    cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simularor_v2_861_prob1_error_fix_23ed513705397\\simulator.exe', ml_args]
     #cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v2_840_msft_3b64d7f7e2\\simulator.exe', ml_args]
     #cmd_list = ['C:\\work\\bin\\Simulator_action-per-context_SINGLE_submodule94e2dbe9_Prob1_error_fix\\PerformanceConsole.exe', ml_args]
     cmd_list += ('{} 0.03 0.04 {} {} 1000000 50000 {}'.format(num_actions, base_cost, pStrategy, rnd_seed)).split(' ')
@@ -208,19 +209,19 @@ if __name__ == '__main__':
         base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB']#, '--cb_explore_adf --ignore ABU']
         #base_cmd_list = ['--cb_explore_adf --ignore ABU']
         # learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
-        learning_rates = [1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2]
+        learning_rates = [1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2]
         recorded_prob_types = [0,1,2,14]
-        cb_types = ['dr','mtr']
+        cb_types = ['dr', 'mtr']
         baseCosts_d = {x:[1,0] for x in cb_types}
         power_t_vec = {x:[0] for x in cb_types}
         
-        params_cover = [' --cover {}{}{}'.format(N,n,m) for N in [2, 5] for n in ['', ' --nounif'] for m in ['', ' --noconstant']]
-        params_bag = [' --bag {}{}{}'.format(N,n,m) for N in [5, 10] for n in ['', ' --greedify'] for m in ['', ' --noconstant']]
+        params_cover = [' --cover {}{}'.format(N,n) for N in [2, 5, 10] for n in ['', ' --nounif']]
+        params_bag = [' --bag {}{}'.format(N,n) for N in [5, 10] for n in ['', ' --greedify']]
         
-        exploration_d = {'mtr': [''] + params_bag,
-                         'dr':  [''] + params_bag + params_cover}
+        exploration_d = {'mtr': ['', ' --noconstant'] + params_bag,
+                         'dr':  ['', ' --noconstant'] + params_bag + params_cover}
         
-        psi_vec_cover = [0, 0.01]
+        psi_vec_cover = [0, 0.01, 0.1, 1.0]
         
         # # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         # command_list = []
@@ -294,8 +295,8 @@ if __name__ == '__main__':
                     break
                 
             rnd_seed += 1
-            # if rnd_seed == 5:      
-                # psi_vec_cover = [0, 0.01]
+            if rnd_seed == 5:
+                psi_vec_cover = [0, 0.01]
                 # params = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['', ' --nounif']]
                 # exploration_d = {x: params for x in cb_types}
             
