@@ -144,6 +144,18 @@ if __name__ == '__main__':
                 lines[0] += 1
                 already_done.add(x.split(',1000000,',1)[0])
         print('Total lines: {}\nIter1M lines: {}\nIter1M unique: {}'.format(lines[1],lines[0],len(already_done)))
+        if lines[0] > len(already_done):
+            unique_lines = set()
+            cnt = 0
+            with open(fp+'deDup.txt','w') as fd:
+                for x in (gzip.open(fp, 'rt') if fp.endswith('.gz') else open(fp)):
+                    if x in unique_lines:
+                        continue
+                    unique_lines.add(x)
+                    fd.write(x)
+                    cnt += 1
+            print('Total deDup lines: {}\nUniqueLines: {}'.format(cnt,len(unique_lines)))
+
     else:
         with (gzip.open(fp, 'at') if fp.endswith('.gz') else open(fp, 'a')) as f:
             f.write('MLargs,numActions,baseCost,pStrategy,rewardSeed,Iter,CTR,GoodActions,dA\n')
