@@ -221,19 +221,19 @@ if __name__ == '__main__':
         base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB']#, '--cb_explore_adf --ignore ABU']
         #base_cmd_list = ['--cb_explore_adf --ignore ABU']
         # learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
-        learning_rates = [1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2]
+        learning_rates =   [1e-7,       1e-6,       1e-5, 5e-5, 1e-4, 5e-4, 1e-3,               5e-3, 1e-2,                     1e-1,         0.5,            10,      1000]
         recorded_prob_types = [0,1,2,14]
         cb_types = ['dr', 'mtr']
-        baseCosts_d = {x:[1,0] for x in cb_types}
+        baseCosts_d = {x:[10] for x in cb_types}
         power_t_vec = {x:[0] for x in cb_types}
         
-        params_cover = [' --cover {}{}'.format(N,n) for N in [2, 5, 10] for n in ['', ' --nounif']]
-        params_bag = [' --bag {}{}'.format(N,n) for N in [5, 10] for n in ['', ' --greedify']]
+        params_cover = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in [' --nounif']]
+        params_bag = [' --bag {}{}'.format(N,n) for N in [5] for n in [' --greedify']]
         
-        exploration_d = {'mtr': ['', ' --noconstant'] + params_bag,
-                         'dr':  ['', ' --noconstant'] + params_bag + params_cover}
+        exploration_d = {'mtr': [''] + params_bag,
+                         'dr':  [''] + params_bag + params_cover}
         
-        psi_vec_cover = [0, 0.01, 0.1, 1.0]
+        psi_vec_cover = [0, 0.01]
         
         # # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
         # command_list = []
@@ -307,8 +307,8 @@ if __name__ == '__main__':
                     break
                 
             rnd_seed += 1
-            if rnd_seed == 5:
-                psi_vec_cover = [0, 0.01]
+            # if rnd_seed == 5:      
+                # psi_vec_cover = [0, 0.01]
                 # params = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['', ' --nounif']]
                 # exploration_d = {x: params for x in cb_types}
             
