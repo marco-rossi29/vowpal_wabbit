@@ -215,7 +215,7 @@ namespace simulator
                             //Console.Write($"{ex.Examples.First().Last().First().Weight} ");
                             //Console.WriteLine();
 
-                            Console.WriteLine("{},{},{},{},{},{},{},{},{},{}", ml_args, numActions, baseCost, deltaCost, pStrategy, rnd_seed, i, clicks/(float)i, goodActions, goodActionsSinceLast);
+                            Console.WriteLine("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9}", ml_args, numActions, baseCost, deltaCost, pStrategy, rnd_seed, i, clicks/(float)i, goodActions, goodActionsSinceLast);
 
                             //Console.Out.WriteLine($"{userIndex} {topAction} {modelAction} {string.Join(",", scorerPdf)}");
 
