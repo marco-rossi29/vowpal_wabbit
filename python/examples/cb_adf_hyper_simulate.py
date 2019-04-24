@@ -70,13 +70,16 @@ class Command:
 
 def run_experiment(args_tuple):
 
-    ml_args, num_actions, base_cost, pStrategy, rnd_seed = args_tuple
+    ml_args, num_actions, base_cost, delta_cost, pStrategy, rnd_seed = args_tuple
+    num_contexts = num_actions
 
+    # cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v2_840_msft_3b64d7f7e2\\simulator.exe', ml_args]
+    # cmd_list = ['C:\\work\\bin\\Simulator_action-per-context_SINGLE_submodule94e2dbe9_Prob1_error_fix\\PerformanceConsole.exe', ml_args]
     # cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v2_861_latest2_24e4ea4b7a41\\simulator.exe', ml_args]
-    cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simularor_v2_861_prob1_error_fix_23ed513705397\\simulator.exe', ml_args]
-    #cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v2_840_msft_3b64d7f7e2\\simulator.exe', ml_args]
-    #cmd_list = ['C:\\work\\bin\\Simulator_action-per-context_SINGLE_submodule94e2dbe9_Prob1_error_fix\\PerformanceConsole.exe', ml_args]
-    cmd_list += ('{} 0.03 0.04 {} {} 1000000 50000 {}'.format(num_actions, base_cost, pStrategy, rnd_seed)).split(' ')
+    # cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v2_861_prob1_error_fix_23ed513705397\\simulator.exe', ml_args]
+    cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v21_861_2ff79cd518e896\\simulator.exe', ml_args]
+
+    cmd_list += ('{} {} 0.03 0.04 {} {} {} 1000000 50000 {}'.format(num_actions, num_contexts, base_cost, delta_cost, pStrategy, rnd_seed)).split(' ')
     
     try:
         x = check_output(cmd_list, stderr=STDOUT, universal_newlines=True)
@@ -147,7 +150,7 @@ if __name__ == '__main__':
         if lines[0] > len(already_done):
             unique_lines = set()
             cnt = 0
-            with open(fp+'deDup.txt','w') as fd:
+            with open(fp+'.deDup.txt','w') as fd:
                 for x in (gzip.open(fp, 'rt') if fp.endswith('.gz') else open(fp)):
                     if x in unique_lines:
                         continue
@@ -158,162 +161,81 @@ if __name__ == '__main__':
 
     else:
         with (gzip.open(fp, 'at') if fp.endswith('.gz') else open(fp, 'a')) as f:
-            f.write('MLargs,numActions,baseCost,pStrategy,rewardSeed,Iter,CTR,GoodActions,dA\n')
+            f.write('MLargs,numActions,baseCost,deltaCost,pStrategy,rewardSeed,Iter,CTR,GoodActions,dA\n')
     
     # test a single experiment set
     # command = Command(base_cmd, learning_rate=0.005, power_t=0.5, cb_type='dr')
     # run_experiment_set([(command.full_command, 5, 1.0, 7, 24), (command.full_command, 5, 0.0, 7, 24)], 20, fp)
     # sys.exit()
     
-    #fpi = r'C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\cb_hyper_simulate_input.csv'
-    if os.path.isfile(fpi):
-        l = [x.strip() for x in open(fpi)][1:]
-        
-        skipped = 0
-        command_list = []
-        for rnd_seed in range(rnd_seed_start_while_loop):
-            for x in l:
-                pStrategy,baseCost,cb_type,lr = x.split(',')[:4]
-                lr = float(lr)
-                baseCost = float(baseCost)
-                pStrategy = int(pStrategy)
-            
-                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type)
+    
+    base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB']#, '--cb_explore_adf --ignore ABU']
+    #base_cmd_list = ['--cb_explore_adf --ignore ABU']
+    # learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
+    learning_rates =   [            1e-6,       1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1,         0.5,    2.5,    10, 100, 1000]
+    recorded_prob_types = [0,1,2]
+    cb_types = ['dr', 'mtr']
+    costTuple_d = {x:[(0, 10), (1, 10)] for x in cb_types}   # (baseCost,deltaCost) tuples
+    power_t_vec = {x:[0] for x in cb_types}
+    
+    params_cover = [' --cover {}{}'.format(N,n) for N in [5] for n in [' --nounif']]
+    params_bag = [' --bag {}{}'.format(N,n) for N in [5] for n in [' --greedify']]
+    
+    exploration_d = {'mtr': [''] + params_bag,
+                     'dr':  [''] + params_bag + params_cover}
+    
+    psi_vec_cover = [0, 0.01]
+    
+    
+    print('Start while loop...')
+    rnd_seed = rnd_seed_start_while_loop
+    command_list = []
+    skipped = 0
+    while True:
+        for base_cmd in base_cmd_list:
+            marginal_list_vec = [None]#, ['X']] if ' --ignore ABU' in base_cmd else [None]
+            for mar in marginal_list_vec:
+                for cb_type in cb_types:
+                    for exploration in exploration_d[cb_type]:
+                        psi_vec = psi_vec_cover if '--cover' in exploration else [None]
+                        for psi in psi_vec:
+                            for costTuple in costTuple_d[cb_type]:
+                                for pt in power_t_vec[cb_type]:
+                                    for pStrategy in recorded_prob_types:
+                                        for lr in learning_rates:
 
-                s = '{{"ml_args":"{}","numActions":{},"baseCost":{},"pStrategy":{},"rewardSeed":{}'.format(command.full_command, num_actions, baseCost, pStrategy, rnd_seed)
-                if s not in already_done:
-                    command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
-                else:
-                    skipped += 1
+                                            base_cmd2 = base_cmd + exploration
+                                            if psi is not None:
+                                                base_cmd2 += ' --psi ' + str(psi)
 
-                if len(command_list) == num_sim and not dry_run:
-                    run_experiment_set(command_list, num_proc, fp)
-                    command_list = []
-        print('len(command_list): {}\nskipped: {}'.format(len(command_list),skipped))
-        # print(command_list)
+                                            command = Command(base_cmd2, learning_rate=lr, cb_type=cb_type, power_t=pt, marginal_list=mar)
+
+                                            s = ','.join(map(str, [command.full_command, num_actions, costTuple[0], costTuple[1], pStrategy, rnd_seed]))
+                                            if s not in already_done:
+                                                command_list.append((command.full_command, num_actions, costTuple[0], costTuple[1], pStrategy, rnd_seed))
+                                            else:
+                                                skipped += 1
+
+                                            if len(command_list) == num_sim and not dry_run:
+                                                run_experiment_set(command_list, num_proc, fp)
+                                                command_list = []
+                    
         if dry_run:
-            for x in command_list:
-                print(x)
-                input()
-            sys.exit()
-        run_experiment_set(command_list, num_proc, fp)
-        
-        print('Start while loop...')
-        rnd_seed = rnd_seed_start_while_loop
-        command_list = []
-        while True:
-            for x in l:
-                pStrategy,baseCost,cb_type,lr = x.split(',')[:4]
-                lr = float(lr)
-                baseCost = float(baseCost)
-                pStrategy = int(pStrategy)
-            
-                command = Command(base_cmd, learning_rate=lr, cb_type=cb_type)
-                command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
-        
-                if len(command_list) == num_sim:
-                    run_experiment_set(command_list, num_proc, fp)
-                    command_list = []
-
-            rnd_seed += 1
-
-    else:
-        base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB']#, '--cb_explore_adf --ignore ABU']
-        #base_cmd_list = ['--cb_explore_adf --ignore ABU']
-        # learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
-        learning_rates =   [1e-7,       1e-6,       1e-5, 5e-5, 1e-4, 5e-4, 1e-3,               5e-3, 1e-2,                     1e-1,         0.5,            10,      1000]
-        recorded_prob_types = [0,1,2,14]
-        cb_types = ['dr', 'mtr']
-        baseCosts_d = {x:[10] for x in cb_types}
-        power_t_vec = {x:[0] for x in cb_types}
-        
-        params_cover = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in [' --nounif']]
-        params_bag = [' --bag {}{}'.format(N,n) for N in [5] for n in [' --greedify']]
-        
-        exploration_d = {'mtr': [''] + params_bag,
-                         'dr':  [''] + params_bag + params_cover}
-        
-        psi_vec_cover = [0, 0.01]
-        
-        # # Regularization, Learning rates, and Power_t rates grid search for both ips and mtr
-        # command_list = []
-        # skipped = 0
-        # for rnd_seed in range(rnd_seed_start_while_loop):
-            # for bag in bag_vector:
-                # for baseCost in baseCosts:
-                    # for pStrategy in recorded_prob_types:
-                        # for cb_type in cb_types:
-                            # for lr in learning_rates:                                   
-                                # command = Command(base_cmd, learning_rate=lr, cb_type=cb_type)
-
-                                # s = '{{"ml_args":"{}","numActions":{},"baseCost":{},"pStrategy":{},"rewardSeed":{}'.format(command.full_command, num_actions, baseCost, pStrategy, rnd_seed)
-                                # # print(s)
-                                # # input()
-                                # if s not in already_done:
-                                    # command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
-                                # else:
-                                    # skipped += 1
-
-                                # if len(command_list) == num_sim and not dry_run:
-                                    # run_experiment_set(command_list, num_proc, fp)
-                                    # command_list = []
-        # print(len(command_list),skipped)
-        # if dry_run:
+            print(rnd_seed,len(command_list),skipped)
             # for x in command_list:
                 # print(x)
                 # input()
-            # sys.exit()
-        # run_experiment_set(command_list, num_proc, fp)
-        
-        print('Start while loop...')
-        rnd_seed = rnd_seed_start_while_loop
-        command_list = []
-        skipped = 0
-        while True:
-            for base_cmd in base_cmd_list:
-                marginal_list_vec = [None]#, ['X']] if ' --ignore ABU' in base_cmd else [None]
-                for mar in marginal_list_vec:
-                    for cb_type in cb_types:
-                        for exploration in exploration_d[cb_type]:
-                            psi_vec = psi_vec_cover if '--cover' in exploration else [None]
-                            for psi in psi_vec:
-                                for baseCost in baseCosts_d[cb_type]:
-                                    for pt in power_t_vec[cb_type]:
-                                        for pStrategy in recorded_prob_types:
-                                            for lr in learning_rates:
-
-                                                base_cmd2 = base_cmd + exploration
-                                                if psi is not None:
-                                                    base_cmd2 += ' --psi ' + str(psi)
-
-                                                command = Command(base_cmd2, learning_rate=lr, cb_type=cb_type, power_t=pt, marginal_list=mar)
-
-                                                s = ','.join(map(str, [command.full_command, num_actions, baseCost, pStrategy, rnd_seed]))
-                                                if s not in already_done:
-                                                    command_list.append((command.full_command, num_actions, baseCost, pStrategy, rnd_seed))
-                                                else:
-                                                    skipped += 1
-
-                                                if len(command_list) == num_sim and not dry_run:
-                                                    run_experiment_set(command_list, num_proc, fp)
-                                                    command_list = []
-                        
-            if dry_run:
-                print(rnd_seed,len(command_list),skipped)
-                # for x in command_list:
-                    # print(x)
-                    # input()
-                if rnd_seed == 20:
-                    break
-                
-            rnd_seed += 1
-            # if rnd_seed == 5:      
-                # psi_vec_cover = [0, 0.01]
-                # params = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['', ' --nounif']]
-                # exploration_d = {x: params for x in cb_types}
+            if rnd_seed == 20:
+                break
+            
+        rnd_seed += 1
+        # if rnd_seed == 5:      
+            # psi_vec_cover = [0, 0.01]
+            # params = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['', ' --nounif']]
+            # exploration_d = {x: params for x in cb_types}
             
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -a 2 -p 43 -n 430 -r 10000 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\myFile_Actions2.txt.gz"
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --epsilon 0.05 --marginal A" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions2-10_marginal_noQ.txt"
 
 # python C:\work\vw\python\examples\cb_adf_hyper_simulate.py -p 43 -n 430 -b "--cb_explore_adf --ignore ABU" --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_marginal_pt_bag.txt" -a 10
-# python "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\cb_adf_hyper_simulate.py" -a 10 -p 44 -n 440 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_ALL-Simulator_v2_861_latest_10a280447fa35f.txt"
+# python "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\cb_adf_hyper_simulate.py" -a 10 -p 44 -n 440 --fp "C:\Users\marossi\OneDrive - Microsoft\Data\cb_hyperparameters\CTR-4-3_Actions10_ALL-Simulator_v21_861_2ff79cd518e896.txt"
