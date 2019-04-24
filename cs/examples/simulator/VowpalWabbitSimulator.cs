@@ -80,7 +80,7 @@ namespace simulator
             }
         }
 
-        public static void Run(string ml_args, int tot_iter, int mod_iter, int rnd_seed, int numContexts, int numActions, float minP, float maxP, float baseCost, int pStrategy)
+        public static void Run(string ml_args, int tot_iter, int mod_iter, int rnd_seed=0, int numContexts=10, int numActions=10, float minP=0.03f, float maxP=0.04f, float baseCost=0.0f, float deltaCost=1.0f, int pStrategy=0)
         {
             // byte buffer outside so one can change the example and keep the memory around
             var exampleBuffer = new byte[32 * 1024];
@@ -108,7 +108,7 @@ namespace simulator
                     // sample uniform among users
                     int userIndex = randGen.Next(simExamples.Length);
                     var simExample = simExamples[userIndex];
-                    var pdf = simExample.PDF;
+                    var rewardPdf = simExample.PDF;
 
                     //histContext[userIndex]++;
 
@@ -137,7 +137,7 @@ namespace simulator
                             }
                         }
 
-                        int modelAction = (int)scores[0].Action; // scorerPdf.ToList().IndexOf(scorerPdf.Max());
+                        //int modelAction = (int)scores[0].Action; // scorerPdf.ToList().IndexOf(scorerPdf.Max());
                         //histPred[modelAction, userIndex] += 1;
                         //histActions[topAction, userIndex] += 1;
                         if (topAction == userIndex)
@@ -150,9 +150,9 @@ namespace simulator
 
                         // simulate behavior
                         float cost = baseCost;
-                        if (randGen.NextDouble() < pdf[topAction])
+                        if (randGen.NextDouble() < rewardPdf[topAction])
                         {
-                            cost -= 1;
+                            cost -= deltaCost;
                             //histCost[topAction, userIndex] += 1;
                             clicks += 1;
                             //Console.WriteLine($"iter: {i} topAction: {topAction} p:{scorerPdf[topAction]}");
@@ -181,7 +181,7 @@ namespace simulator
                                 break;
                         }
 
-                        ex.Examples[topAction].Label = new ContextualBanditLabel((uint)topAction, cost, pReported);
+                        ex.Examples[topAction].Label = new ContextualBanditLabel(topAction, cost, pReported);
 
                         // invoke learning
                         var oneStepAheadScores = ex.Learn(VowpalWabbitPredictionType.ActionProbabilities, learner);
@@ -193,8 +193,8 @@ namespace simulator
                             //Console.WriteLine($"Clicks {clicks}");
                             //Console.WriteLine($"CTR {clicks / (float)i}");
                             //Console.WriteLine("Hists:");
-                            //for (int j = 0; j < pdf.Length; j++)
-                            //    Console.WriteLine(j + ": " + histActions[j] + " - " + histPred[j] + "/" + histPred2[j] + " - " + histCost[j] + " - " + pdf[j] + " - " + (histCost[j] / (float)histActions[j]));
+                            //for (int j = 0; j < rewardPdf.Length; j++)
+                            //    Console.WriteLine(j + ": " + histActions[j] + " - " + histPred[j] + "/" + histPred2[j] + " - " + histCost[j] + " - " + rewardPdf[j] + " - " + (histCost[j] / (float)histActions[j]));
                             //Console.WriteLine();
 
                             //foreach (var currEx in ex.Examples)
@@ -215,7 +215,7 @@ namespace simulator
                             //Console.Write($"{ex.Examples.First().Last().First().Weight} ");
                             //Console.WriteLine();
 
-                            Console.WriteLine("{0},{1},{2},{3},{4},{5},{6},{7},{8}", ml_args, numActions, baseCost, pStrategy, rnd_seed, i, clicks/(float)i, goodActions, goodActionsSinceLast);
+                            Console.WriteLine("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9}", ml_args, numActions, baseCost, deltaCost, pStrategy, rnd_seed, i, clicks/(float)i, goodActions, goodActionsSinceLast);
 
                             //Console.Out.WriteLine($"{userIndex} {topAction} {modelAction} {string.Join(",", scorerPdf)}");
 
