@@ -169,24 +169,26 @@ if __name__ == '__main__':
     # sys.exit()
     
     
-    base_cmd_list = ['--cb_explore_adf --ignore XA -q UB --ignore_linear UB', '--cb_explore_adf --ignore XA -q UB']#, '--cb_explore_adf --ignore ABU']
+    base_cmd_list = ['--cb_explore_adf --ignore XA -q UB']#, '--cb_explore_adf --ignore ABU'] '--cb_explore_adf --ignore XA -q UB --ignore_linear UB', 
     #base_cmd_list = ['--cb_explore_adf --ignore ABU']
     # learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
-    learning_rates =   [1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2]
+    learning_rates = [5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
+    # learning_rates = [0.5, 1, 2.5, 5, 10, 100, 1000]#[5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2]
     recorded_prob_types = [0,1,2,14]
-    cb_types = ['dr', 'mtr']
-    costTuple_d = {x:[(0, 10), (1, 10), (10, 1), (0, 1), (1, 1)] for x in cb_types}   # (baseCost,deltaCost) tuples
+    cb_types = ['mtr']
+    costTuple_d = {x:[(0, 1), (1, 1), (1, 10), (10, 1), (0, 10)] for x in cb_types}   # (baseCost,deltaCost) tuples    (10, 1), (0, 10), 
     power_t_vec = {x:[0] for x in cb_types}
     
-    params_cover = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['',' --nounif']]
-    params_bag = [' --bag {}{}{}'.format(N,n,m) for N in [2, 5] for n in ['',' --greedify'] for m in ['',' --epsilon 0.05']]
-    
-    exploration_d = {'mtr': [''] + params_bag,
-                     'dr':  [''] + params_bag + params_cover}
-    
+    # params_bag = [' --bag {}{}{}'.format(N,n,m) for N in [2, 5] for n in ['',' --greedify'] for m in ['',' --epsilon 0.05']]
+    # params_cover = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['',' --nounif']]
+    params_softmax = [' --softmax{}'.format(m) for m in ['', ' --lambda 0.5', ' --lambda 2', ' --lambda 3']]
     psi_vec_cover = [0, 0.01]
     
-    
+    # exploration_d = {'mtr': [''] + params_bag,
+                     # 'dr':  [''] + params_bag + params_cover}
+                     
+    exploration_d = {x: params_softmax for x in cb_types}
+
     print('Start while loop...')
     rnd_seed = rnd_seed_start_while_loop
     command_list = []
@@ -229,8 +231,8 @@ if __name__ == '__main__':
                 break
             
         rnd_seed += 1
-        # if rnd_seed == 5:
-            # learning_rates = [5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2]
+        # if rnd_seed == 2:
+            # learning_rates = [5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2]
             # psi_vec_cover = [0, 0.01]
             # params = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['', ' --nounif']]
             # exploration_d = {x: params for x in cb_types}
