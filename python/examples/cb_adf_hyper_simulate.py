@@ -170,15 +170,15 @@ if __name__ == '__main__':
     # sys.exit()
     
     
-    base_cmd_list = ['--cb_explore_adf --ignore XA -q UB']#,'--cb_explore_adf --ignore XA -q UB --ignore_linear UB']#, '--cb_explore_adf --ignore ABU']  
+    base_cmd_list = ['--cb_explore_adf --ignore XA -q UB','--cb_explore_adf --ignore XA -q UB --ignore_linear UB']#, '--cb_explore_adf --ignore ABU']  
     #base_cmd_list = ['--cb_explore_adf --ignore ABU']
-    # learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
+    learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
     # learning_rates = [5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
     # learning_rates = [1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.5, 10, 100, 1000]
     # learning_rates = [5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
     # learning_rates = [0.5, 1, 2.5, 5, 10, 100, 1000]#[5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2]
     recorded_prob_types = [0,1]
-    cb_types = ['mtr','dr']
+    cb_types = ['mtr','dr','ips']
     # costTuple_d = {x:[(1, 1), (1, 10), (0,1), (0,10), (10,1)] for x in cb_types}   # (baseCost,deltaCost) tuples    
     power_t_vec = {x:[0] for x in cb_types}
     
@@ -209,7 +209,7 @@ if __name__ == '__main__':
                     for exploration in exploration_d[cb_type]:
                         psi_vec = psi_vec_cover if '--cover' in exploration else [None]
                         for psi in psi_vec:
-                            costTuple_vec = [(0,1),(1,10)]
+                            costTuple_vec = [(1, 1), (1, 10), (0,1), (0,10), (10,1)]    # (baseCost,deltaCost) tuples  
                             # if rnd_seed > 5:
                                 # if 'regcb' in exploration:
                                     # costTuple_vec = [(1,1), (1,10)]
@@ -218,10 +218,6 @@ if __name__ == '__main__':
                             for costTuple in costTuple_vec:
                                 for pt in power_t_vec[cb_type]:
                                     for pStrategy in recorded_prob_types:
-                                        if rnd_seed > 2 and 'softmax' in exploration:
-                                            learning_rates = [5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
-                                        else:
-                                            learning_rates = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.5]
                                         for lr in learning_rates:
 
                                             base_cmd2 = base_cmd + exploration
@@ -249,7 +245,8 @@ if __name__ == '__main__':
                 break
             
         rnd_seed += 1
-        # if rnd_seed == 5:
+        if rnd_seed == 3:
+            cb_types = ['mtr','dr']
             # costTuple_d = {x:[(1, 1), (1, 10)] for x in cb_types}
             # learning_rates = [5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2]
             
