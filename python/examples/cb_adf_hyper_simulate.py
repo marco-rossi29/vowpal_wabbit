@@ -79,7 +79,7 @@ def run_experiment(args_tuple):
     # cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v2_861_prob1_error_fix_23ed513705397\\simulator.exe', ml_args]
     cmd_list = ['C:\\work\\bin\\cs_sim_SINGLE\\Simulator_v21_861_2ff79cd518e896\\simulator.exe', ml_args]
 
-    cmd_list += ('{} {} 0.03 0.04 {} {} {} 1000000 50000 {}'.format(num_actions, num_contexts, base_cost, delta_cost, pStrategy, rnd_seed)).split(' ')
+    cmd_list += ('{} {} 0.03 0.04 {} {} {} 10000000 1000000 {}'.format(num_actions, num_contexts, base_cost, delta_cost, pStrategy, rnd_seed)).split(' ')
     
     try:
         x = check_output(cmd_list, stderr=STDOUT, universal_newlines=True)
@@ -116,7 +116,7 @@ def result_writer(results, fp):
                     fe.write(result+'\n')
             else:
                 f.write(result)
-                z = [x for x in result.splitlines() if ',1000000,' in x]
+                z = [x for x in result.splitlines() if ',10000000,' in x]
                 f2.write('\n'.join(z)+'\n')
 
 
@@ -143,9 +143,9 @@ if __name__ == '__main__':
         for x in (gzip.open(fp, 'rt') if fp.endswith('.gz') else open(fp)):
             lines[1] += 1
             
-            if ',1000000,' in x:
+            if ',10000000,' in x:
                 lines[0] += 1
-                already_done.add(x.split(',1000000,',1)[0])
+                already_done.add(x.split(',10000000,',1)[0])
         print('Total lines: {}\nIter1M lines: {}\nIter1M unique: {}'.format(lines[1],lines[0],len(already_done)))
         if lines[0] > len(already_done):
             unique_lines = set()
@@ -170,30 +170,32 @@ if __name__ == '__main__':
     # sys.exit()
     
     
-    base_cmd_list = ['--cb_explore_adf --ignore XA -q UB','--cb_explore_adf --ignore XA -q UB --ignore_linear UB']#, '--cb_explore_adf --ignore ABU']  
+    base_cmd_list = ['--cb_explore_adf --ignore XA -q UB']#,'--cb_explore_adf --ignore XA -q UB --ignore_linear UB']#, '--cb_explore_adf --ignore ABU']  
     #base_cmd_list = ['--cb_explore_adf --ignore ABU']
     # learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
     # learning_rates = [5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
     # learning_rates = [1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.5, 10, 100, 1000]
     # learning_rates = [5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
     # learning_rates = [0.5, 1, 2.5, 5, 10, 100, 1000]#[5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2]
-    recorded_prob_types = [0,1,2,14]
+    recorded_prob_types = [0,1]
     cb_types = ['mtr','dr']
-    # costTuple_d = {x:[(0, 1), (1, 1), (1, 10), (10, 1), (0, 10)] for x in cb_types}   # (baseCost,deltaCost) tuples    (10, 1), (0, 10), 
+    # costTuple_d = {x:[(1, 1), (1, 10), (0,1), (0,10), (10,1)] for x in cb_types}   # (baseCost,deltaCost) tuples    
     power_t_vec = {x:[0] for x in cb_types}
     
-    params_bag = [' --bag {}{}{}'.format(N,n,m) for N in [2, 5, 10] for n in ['',' --greedify'] for m in ['',' --epsilon 0.05']]
-    params_cover = [' --cover {}{}'.format(N,n) for N in [2, 5, 10] for n in ['',' --nounif']]
+    params_bag = [' --bag {}{}{}'.format(N,n,m) for N in [2] for n in [' --greedify'] for m in ['',' --epsilon 0.05']]
+    params_cover = [' --cover {}{}'.format(N,n) for N in [2] for n in [' --nounif']]
     params_softmax = [' --softmax{}{}'.format(n,m) for n in ['', ' --lambda 0.5', ' --lambda 2', ' --lambda 3'] for m in ['',' --epsilon 0.05']]
     
     mel1_vec = [' --mellowness 0.001', ' --mellowness 0.01', ' --mellowness 0.1', ' --mellowness 0.5', ' --mellowness 0.75', ' --mellowness 1.0']
-    mel2_vec = [' --mellowness 0.001', ' --mellowness 0.01']
+    mel2_vec = [' --mellowness 0.01']
     
-    params_regcb = [' {}{}{}'.format(x,n,m) for x in ['--regcb','--regcbopt'] for m in ['',' --epsilon 0.05'] for n in mel1_vec]
-    psi_vec_cover = [0, 0.01, 0.1, 1]
+    params_regcb = [' {}{}{}'.format(x,n,m) for x in ['--regcbopt'] for m in ['',' --epsilon 0.05'] for n in mel2_vec]
+    psi_vec_cover = [0.01]
     
-    exploration_d = {'mtr': [''] + params_bag,
-                     'dr':  [''] + params_bag + params_cover}
+    # exploration_d = {'mtr': [''] + params_bag + params_regcb,
+                     # 'dr':  [''] + params_bag + params_cover + params_regcb}
+
+    exploration_d = {x: [''] for x in cb_types}
 
     print('Start while loop...')
     rnd_seed = rnd_seed_start_while_loop
@@ -207,7 +209,7 @@ if __name__ == '__main__':
                     for exploration in exploration_d[cb_type]:
                         psi_vec = psi_vec_cover if '--cover' in exploration else [None]
                         for psi in psi_vec:
-                            costTuple_vec = [(1,1), (1,10), (0,1), (0,10), (10,1)]
+                            costTuple_vec = [(0,1),(1,10)]
                             # if rnd_seed > 5:
                                 # if 'regcb' in exploration:
                                     # costTuple_vec = [(1,1), (1,10)]
@@ -219,7 +221,7 @@ if __name__ == '__main__':
                                         if rnd_seed > 2 and 'softmax' in exploration:
                                             learning_rates = [5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
                                         else:
-                                            learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
+                                            learning_rates = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.5]
                                         for lr in learning_rates:
 
                                             base_cmd2 = base_cmd + exploration
@@ -243,7 +245,7 @@ if __name__ == '__main__':
             # for x in command_list:
                 # print(x)
                 # input()
-            if rnd_seed == 20:
+            if rnd_seed == 15:
                 break
             
         rnd_seed += 1
