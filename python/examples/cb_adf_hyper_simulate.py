@@ -158,6 +158,7 @@ if __name__ == '__main__':
                     fd.write(x)
                     cnt += 1
             print('Total deDup lines: {}\nUniqueLines: {}'.format(cnt,len(unique_lines)))
+            input()
 
     else:
         with (gzip.open(fp, 'at') if fp.endswith('.gz') else open(fp, 'a')) as f:
@@ -169,25 +170,30 @@ if __name__ == '__main__':
     # sys.exit()
     
     
-    base_cmd_list = ['--cb_explore_adf --ignore XA -q UB']#, '--cb_explore_adf --ignore ABU'] '--cb_explore_adf --ignore XA -q UB --ignore_linear UB', 
+    base_cmd_list = ['--cb_explore_adf --ignore XA -q UB','--cb_explore_adf --ignore XA -q UB --ignore_linear UB']#, '--cb_explore_adf --ignore ABU']  
     #base_cmd_list = ['--cb_explore_adf --ignore ABU']
     # learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
-    learning_rates = [5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
+    # learning_rates = [5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
+    # learning_rates = [1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.5, 10, 100, 1000]
+    # learning_rates = [5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
     # learning_rates = [0.5, 1, 2.5, 5, 10, 100, 1000]#[5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2]
     recorded_prob_types = [0,1,2,14]
-    cb_types = ['mtr']
-    costTuple_d = {x:[(0, 1), (1, 1), (1, 10), (10, 1), (0, 10)] for x in cb_types}   # (baseCost,deltaCost) tuples    (10, 1), (0, 10), 
+    cb_types = ['mtr','dr']
+    # costTuple_d = {x:[(0, 1), (1, 1), (1, 10), (10, 1), (0, 10)] for x in cb_types}   # (baseCost,deltaCost) tuples    (10, 1), (0, 10), 
     power_t_vec = {x:[0] for x in cb_types}
     
-    # params_bag = [' --bag {}{}{}'.format(N,n,m) for N in [2, 5] for n in ['',' --greedify'] for m in ['',' --epsilon 0.05']]
-    # params_cover = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['',' --nounif']]
-    params_softmax = [' --softmax{}'.format(m) for m in ['', ' --lambda 0.5', ' --lambda 2', ' --lambda 3']]
-    psi_vec_cover = [0, 0.01]
+    params_bag = [' --bag {}{}{}'.format(N,n,m) for N in [2, 5, 10] for n in ['',' --greedify'] for m in ['',' --epsilon 0.05']]
+    params_cover = [' --cover {}{}'.format(N,n) for N in [2, 5, 10] for n in ['',' --nounif']]
+    params_softmax = [' --softmax{}{}'.format(n,m) for n in ['', ' --lambda 0.5', ' --lambda 2', ' --lambda 3'] for m in ['',' --epsilon 0.05']]
     
-    # exploration_d = {'mtr': [''] + params_bag,
-                     # 'dr':  [''] + params_bag + params_cover}
-                     
-    exploration_d = {x: params_softmax for x in cb_types}
+    mel1_vec = [' --mellowness 0.001', ' --mellowness 0.01', ' --mellowness 0.1', ' --mellowness 0.5', ' --mellowness 0.75', ' --mellowness 1.0']
+    mel2_vec = [' --mellowness 0.001', ' --mellowness 0.01']
+    
+    params_regcb = [' {}{}{}'.format(x,n,m) for x in ['--regcb','--regcbopt'] for m in ['',' --epsilon 0.05'] for n in mel1_vec]
+    psi_vec_cover = [0, 0.01, 0.1, 1]
+    
+    exploration_d = {'mtr': [''] + params_bag,
+                     'dr':  [''] + params_bag + params_cover}
 
     print('Start while loop...')
     rnd_seed = rnd_seed_start_while_loop
@@ -201,9 +207,19 @@ if __name__ == '__main__':
                     for exploration in exploration_d[cb_type]:
                         psi_vec = psi_vec_cover if '--cover' in exploration else [None]
                         for psi in psi_vec:
-                            for costTuple in costTuple_d[cb_type]:
+                            costTuple_vec = [(1,1), (1,10), (0,1), (0,10), (10,1)]
+                            # if rnd_seed > 5:
+                                # if 'regcb' in exploration:
+                                    # costTuple_vec = [(1,1), (1,10)]
+                                # elif 'softmax' in exploration:
+                                    # costTuple_vec = [(1,10), (0,10)]
+                            for costTuple in costTuple_vec:
                                 for pt in power_t_vec[cb_type]:
                                     for pStrategy in recorded_prob_types:
+                                        if rnd_seed > 2 and 'softmax' in exploration:
+                                            learning_rates = [5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
+                                        else:
+                                            learning_rates = [1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2, 2e-2, 2.5e-2, 5e-2, 1e-1, 2.5e-1, 0.5, 1, 2.5, 5, 10, 100, 1000]
                                         for lr in learning_rates:
 
                                             base_cmd2 = base_cmd + exploration
@@ -231,8 +247,16 @@ if __name__ == '__main__':
                 break
             
         rnd_seed += 1
-        # if rnd_seed == 2:
+        # if rnd_seed == 5:
+            # costTuple_d = {x:[(1, 1), (1, 10)] for x in cb_types}
             # learning_rates = [5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 2e-3, 2.5e-3, 5e-3, 1e-2]
+            
+            # params_regcb = [' --regcbopt{}{}'.format(n,m) for n in [' --mellowness 0.5', ' --mellowness 0.75'] for m in ['']]
+                     
+            # exploration_d = {x: params_regcb for x in cb_types}
+            
+            # recorded_prob_types = [0,1]
+            
             # psi_vec_cover = [0, 0.01]
             # params = [' --cover {}{}'.format(N,n) for N in [2, 5] for n in ['', ' --nounif']]
             # exploration_d = {x: params for x in cb_types}
