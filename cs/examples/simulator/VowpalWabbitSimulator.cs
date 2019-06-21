@@ -18,11 +18,11 @@ namespace simulator
 
             public float[] PDF { get; }
 
-            public SimulatorExample(int numActions, int sharedContext, float minP, float maxP)
+            public SimulatorExample(int numActions, int sharedContext, int preferredAction, float minP, float maxP)
             {
                 // generate distinct per user context with 1 prefered action
                 this.PDF = Enumerable.Range(0, numActions).Select(_ => minP).ToArray();
-                this.PDF[sharedContext] = maxP;
+                this.PDF[preferredAction] = maxP;
 
                 this.exampleBuffer = new byte[32 * 1024];
 
@@ -38,7 +38,7 @@ namespace simulator
                             U = new { C = sharedContext.ToString() },
                             _multi = Enumerable
                                 .Range(0, numActions)
-                                .Select(i => new { A = new { Constant = 1, Id = i.ToString() }, B = new { Id = i.ToString() }, X = new { Constant = 1, Id = (numActions*sharedContext + i).ToString() } })
+                                .Select(i => new { A = new { Constant = 1, Id = i.ToString() }, B = new { Id = i.ToString() } })
                                 .ToArray()
                         },
                         p = Enumerable.Range(0, numActions).Select(i => 0.0f).ToArray()
@@ -76,7 +76,7 @@ namespace simulator
             }
         }
 
-        public static void Run(string ml_args, int tot_iter, int mod_iter, int rnd_seed=0, int numContexts=10, int numActions=10, float minP=0.03f, float maxP=0.04f, float noClickCost = 0.0f, float clickCost = -1.0f, int pStrategy =0)
+        public static void Run(string ml_args, int tot_iter, int mod_iter, int rnd_seed=0, int numContexts=10, int numActions=10, float minP=0.03f, float maxP=0.04f, float noClickCost = 0.0f, float clickCost = -1.0f, int pStrategy = 0, int swap_preferences_iter=-1)
         {
             // byte buffer outside so one can change the example and keep the memory around
             var exampleBuffer = new byte[32 * 1024];
@@ -84,7 +84,7 @@ namespace simulator
             var randGen = new Random(rnd_seed);
 
             var simExamples = Enumerable.Range(0, numContexts)
-                .Select(i => new SimulatorExample(numActions, i, minP, maxP))
+                .Select(i => new SimulatorExample(numActions, i, i, minP, maxP))
                 .ToArray();
 
             var scorerPdf = new float[numActions];
@@ -92,11 +92,20 @@ namespace simulator
             int goodActions = 0;
             int goodActionsSinceLast = 0;
             float cost;
+            bool swaped_preferences = false;
 
             using (var learner = new VowpalWabbit(ml_args + " --quiet"))
             {
-                for (int i = 1; i <= tot_iter; i++)
+                for (int iter = 1; iter <= tot_iter; iter++)
                 {
+                    if (iter == swap_preferences_iter)
+                    {
+                        simExamples = Enumerable.Range(0, numContexts)
+                            .Select(i => new SimulatorExample(numActions, i, numActions-i-1, minP, maxP))
+                            .ToArray();
+                        swaped_preferences = true;
+                    }
+
                     // sample uniformly among contexts
                     int contextIndex = randGen.Next(simExamples.Length);
                     var simExample = simExamples[contextIndex];
@@ -126,12 +135,13 @@ namespace simulator
                             }
                         }
 
-                        if (topAction == contextIndex)
+                        int preferredAction = swaped_preferences ? numActions - contextIndex - 1 : contextIndex;
+                        if (topAction == preferredAction)
                         {
                             goodActions += 1;
                             goodActionsSinceLast += 1;
                         }
-
+                        
                         // simulate click/noClick behavior
                         if (randGen.NextDouble() < costPdf[topAction])
                         {
@@ -169,9 +179,9 @@ namespace simulator
                         // invoke learning
                         var oneStepAheadScores = ex.Learn(VowpalWabbitPredictionType.ActionProbabilities, learner);
 
-                        if (i % mod_iter == 0 || i == tot_iter)
+                        if (iter % mod_iter == 0 || iter == tot_iter)
                         {
-                            Console.WriteLine("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}", ml_args, numActions, numContexts, noClickCost, clickCost, pStrategy, rnd_seed, i, clicks/(float)i, goodActions, goodActionsSinceLast);
+                            Console.WriteLine("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}", ml_args, numActions, numContexts, noClickCost, clickCost, pStrategy, rnd_seed, iter, clicks/(float)iter, goodActions, goodActionsSinceLast);
 
                             goodActionsSinceLast = 0;
                         }
