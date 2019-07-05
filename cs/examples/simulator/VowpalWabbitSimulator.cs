@@ -22,6 +22,8 @@ namespace simulator
             {
                 // generate distinct per user context with 1 prefered action
                 this.PDF = Enumerable.Range(0, numActions).Select(_ => minP).ToArray();
+                preferredAction %= numActions;
+                if (preferredAction < 0) preferredAction += numActions;
                 this.PDF[preferredAction] = maxP;
 
                 this.exampleBuffer = new byte[32 * 1024];
@@ -101,7 +103,7 @@ namespace simulator
                     if (iter == swap_preferences_iter)
                     {
                         simExamples = Enumerable.Range(0, numContexts)
-                            .Select(i => new SimulatorExample(numActions, i, numActions-i-1, minP, maxP))
+                            .Select(i => new SimulatorExample(numActions, i, -i-1, minP, maxP))
                             .ToArray();
                         swaped_preferences = true;
                     }
