@@ -18,13 +18,18 @@ namespace simulator
 
             public float[] PDF { get; }
 
+            public int preferredAction {get; }
+
             public SimulatorExample(int numActions, int sharedContext, int preferredAction, float minP, float maxP)
             {
-                // generate distinct per user context with 1 prefered action
+                // ensure preferredAction is between 0 and numActions-1
+                this.preferredAction = preferredAction % numActions;
+                if (this.preferredAction < 0)
+                    this.preferredAction += numActions;
+
+                // generate per user context and PDF with 1 preferred action
                 this.PDF = Enumerable.Range(0, numActions).Select(_ => minP).ToArray();
-                preferredAction %= numActions;
-                if (preferredAction < 0) preferredAction += numActions;
-                this.PDF[preferredAction] = maxP;
+                this.PDF[this.preferredAction] = maxP;
 
                 this.exampleBuffer = new byte[32 * 1024];
 
@@ -94,7 +99,6 @@ namespace simulator
             int goodActions = 0;
             int goodActionsSinceLast = 0;
             float cost;
-            bool swaped_preferences = false;
 
             using (var learner = new VowpalWabbit(ml_args + " --quiet"))
             {
@@ -105,7 +109,6 @@ namespace simulator
                         simExamples = Enumerable.Range(0, numContexts)
                             .Select(i => new SimulatorExample(numActions, i, -i-1, minP, maxP))
                             .ToArray();
-                        swaped_preferences = true;
                     }
 
                     // sample uniformly among contexts
@@ -137,8 +140,7 @@ namespace simulator
                             }
                         }
 
-                        int preferredAction = swaped_preferences ? numActions - contextIndex - 1 : contextIndex;
-                        if (topAction == preferredAction)
+                        if (topAction == simExample.preferredAction)
                         {
                             goodActions += 1;
                             goodActionsSinceLast += 1;
