@@ -27,7 +27,7 @@ namespace simulator
                 if (this.preferredAction < 0)
                     this.preferredAction += numActions;
 
-                // generate per user context and PDF with 1 preferred action
+                // generate per user context and PDF with maxP for preferred action and minP for all other actions
                 this.PDF = Enumerable.Range(0, numActions).Select(_ => minP).ToArray();
                 this.PDF[this.preferredAction] = maxP;
 
@@ -83,7 +83,7 @@ namespace simulator
             }
         }
 
-        public static void Run(string ml_args, int tot_iter, int mod_iter, int rnd_seed=0, int numContexts=10, int numActions=10, float minP=0.03f, float maxP=0.04f, float noClickCost = 0.0f, float clickCost = -1.0f, int pStrategy = 0, int swap_preferences_iter=-1)
+        public static void Run(string ml_args, int tot_iter, int mod_iter, int rnd_seed=0, int numContexts=10, int numActions=10, float minP=0.03f, float maxP=0.04f, float noClickCost = 0.0f, float clickCost = -1.0f, int swap_preferences_iter=-1)
         {
             // byte buffer outside so one can change the example and keep the memory around
             var exampleBuffer = new byte[32 * 1024];
@@ -155,37 +155,14 @@ namespace simulator
                         else
                             cost = noClickCost;
 
-                        float pReported = scorerPdf[topAction];
-                        switch (pStrategy)
-                        {
-                            case 1:
-                                pReported = 1.0f / numActions;
-                                break;
-                            case 2:
-                                pReported = Math.Max(pReported, 0.5f);
-                                break;
-                            case 6:
-                                pReported = Math.Max(pReported, 0.9f);
-                                break;
-                            case 7:
-                                pReported = 0.9f;
-                                break;
-                            case 13:
-                                pReported = 0.5f;
-                                break;
-                            case 14:
-                                pReported = Math.Max(pReported, 0.1f);
-                                break;
-                        }
-
-                        ex.Examples[topAction].Label = new ContextualBanditLabel(topAction, cost, pReported);
+                        ex.Examples[topAction].Label = new ContextualBanditLabel(topAction, cost, scorerPdf[topAction]);
 
                         // invoke learning
                         var oneStepAheadScores = ex.Learn(VowpalWabbitPredictionType.ActionProbabilities, learner);
 
                         if (iter % mod_iter == 0 || iter == tot_iter)
                         {
-                            Console.WriteLine("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}", ml_args, numActions, numContexts, noClickCost, clickCost, pStrategy, rnd_seed, iter, clicks/(float)iter, goodActions, goodActionsSinceLast);
+                            Console.WriteLine("{0},{1},{2},{3}", iter, clicks/(float)iter, goodActions, goodActionsSinceLast);
 
                             goodActionsSinceLast = 0;
                         }
