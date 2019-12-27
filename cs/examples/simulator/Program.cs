@@ -8,6 +8,7 @@ namespace simulator
         {
             int numActions, numContexts, tot_iter, mod_iter, rnd_seed, swap_preferences_iter;
             float minP, maxP, noClickCost, clickCost;
+            string SaveModelPath = "";
 
             string ml_args = args[0];
             if (!int.TryParse(args[1], out numActions) ||
@@ -22,11 +23,14 @@ namespace simulator
                 !int.TryParse(args[10], out swap_preferences_iter))
             {
                 Console.WriteLine("Failed to parse input arguments!");
-                Console.WriteLine("Usage: simulator.exe ml_args num_actions num_contexts minP maxP noClickCost clickCost tot_iter mod_iter rnd_seed swap_preferences_iter");
+                Console.WriteLine("Usage: simulator.exe ml_args num_actions num_contexts minP maxP noClickCost clickCost tot_iter mod_iter rnd_seed swap_preferences_iter SaveModelPath");
                 return;
             }
 
-            VowpalWabbitSimulator.Run(ml_args, tot_iter, mod_iter, rnd_seed, numContexts, numActions, minP, maxP, noClickCost, clickCost, swap_preferences_iter);
+            if(args.Length >= 12)
+                SaveModelPath = args[11];
+
+            VowpalWabbitSimulator.Run(ml_args, tot_iter, mod_iter, rnd_seed, numContexts, numActions, minP, maxP, noClickCost, clickCost, swap_preferences_iter, SaveModelPath);
         }
     }
 }

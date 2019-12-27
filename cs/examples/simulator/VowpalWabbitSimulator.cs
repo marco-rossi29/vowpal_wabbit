@@ -83,7 +83,7 @@ namespace simulator
             }
         }
 
-        public static void Run(string ml_args, int tot_iter, int mod_iter, int rnd_seed=0, int numContexts=10, int numActions=10, float minP=0.03f, float maxP=0.04f, float noClickCost = 0.0f, float clickCost = -1.0f, int swap_preferences_iter=-1)
+        public static void Run(string ml_args, int tot_iter, int mod_iter, int rnd_seed=0, int numContexts=10, int numActions=10, float minP=0.03f, float maxP=0.04f, float noClickCost = 0.0f, float clickCost = -1.0f, int swap_preferences_iter=-1, string SaveModelPath="")
         {
             // byte buffer outside so one can change the example and keep the memory around
             var exampleBuffer = new byte[32 * 1024];
@@ -165,6 +165,9 @@ namespace simulator
                             Console.WriteLine("{0},{1},{2},{3}", iter, clicks/(float)iter, goodActions, goodActionsSinceLast);
 
                             goodActionsSinceLast = 0;
+
+                            if(SaveModelPath != "")
+                                learner.SaveModel(SaveModelPath+"."+iter.ToString()+".vw");
                         }
                     }
                 }
