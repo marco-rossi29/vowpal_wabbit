@@ -83,7 +83,7 @@ namespace simulator
             }
         }
 
-        public static void Run(string ml_args, int tot_iter, int mod_iter, int rnd_seed=0, int numContexts=10, int numActions=10, float minP=0.03f, float maxP=0.04f, float noClickCost = 0.0f, float clickCost = -1.0f, int swap_preferences_iter=-1, string SaveModelPath="")
+        public static void Run(string ml_args, int tot_iter, int mod_iter, int rnd_seed=0, int numContexts=10, int numActions=10, float minP=0.03f, float maxP=0.04f, float noClickCost = 0.0f, float clickCost = -1.0f, int swap_preferences_iter=-1, string ml_args2 = "", string SaveModelPath="")
         {
             // byte buffer outside so one can change the example and keep the memory around
             var exampleBuffer = new byte[32 * 1024];
@@ -101,6 +101,7 @@ namespace simulator
             float cost;
 
             using (var learner = new VowpalWabbit(ml_args + " --quiet"))
+            using(var learner2 = new VowpalWabbit(ml_args2 + " --quiet"))
             {
                 for (int iter = 1; iter <= tot_iter; iter++)
                 {
@@ -116,12 +117,15 @@ namespace simulator
                     var simExample = simExamples[contextIndex];
                     var costPdf = simExample.PDF;
 
+                    using (var ex2 = simExample.CreateExample(learner2))
                     using (var ex = simExample.CreateExample(learner))
                     {
                         var scores = ex.Predict(VowpalWabbitPredictionType.ActionProbabilities, learner);
+                        var scores2 = ex2.Predict(VowpalWabbitPredictionType.ActionProbabilities, learner2);
 
+                        var goodScores = learner.PerformanceStatistics.AverageLoss < learner2.PerformanceStatistics.AverageLoss ? scores : scores2;
                         var total = 0.0;
-                        foreach (var actionScore in scores)
+                        foreach (var actionScore in goodScores)
                         {
                             total += actionScore.Score;
                             scorerPdf[actionScore.Action] = actionScore.Score;
@@ -130,7 +134,7 @@ namespace simulator
                         var draw = randGen.NextDouble() * total;
                         var sum = 0.0;
                         uint topAction = 0;
-                        foreach (var actionScore in scores)
+                        foreach (var actionScore in goodScores)
                         {
                             sum += actionScore.Score;
                             if(sum > draw)
@@ -156,9 +160,11 @@ namespace simulator
                             cost = noClickCost;
 
                         ex.Examples[topAction].Label = new ContextualBanditLabel(topAction, cost, scorerPdf[topAction]);
+                        ex2.Examples[topAction].Label = new ContextualBanditLabel(topAction, cost, scorerPdf[topAction]);
 
                         // invoke learning
                         var oneStepAheadScores = ex.Learn(VowpalWabbitPredictionType.ActionProbabilities, learner);
+                        var oneStepAheadScores2 = ex2.Learn(VowpalWabbitPredictionType.ActionProbabilities, learner2);
 
                         if (iter % mod_iter == 0 || iter == tot_iter)
                         {
