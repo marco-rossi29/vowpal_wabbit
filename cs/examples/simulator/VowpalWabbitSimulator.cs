@@ -99,6 +99,9 @@ namespace simulator
             int goodActions = 0;
             int goodActionsSinceLast = 0;
             float cost;
+            double snips_num1 = 0, snips_num2 = 0, snips_den1 = 0, snips_den2 = 0;
+            int learnersHist1 = 0, learnersHist2 = 0;
+            ActionScore[] goodScores;
 
             using (var learner = new VowpalWabbit(ml_args + " --quiet"))
             using(var learner2 = new VowpalWabbit(ml_args2 + " --quiet"))
@@ -120,10 +123,18 @@ namespace simulator
                     using (var ex2 = simExample.CreateExample(learner2))
                     using (var ex = simExample.CreateExample(learner))
                     {
-                        var scores = ex.Predict(VowpalWabbitPredictionType.ActionProbabilities, learner);
-                        var scores2 = ex2.Predict(VowpalWabbitPredictionType.ActionProbabilities, learner2);
+                        // using snips estimates
+                        if(snips_num1 * snips_den2 >= snips_num2 * snips_den1)
+                        {
+                            learnersHist1++;
+                            goodScores = ex.Predict(VowpalWabbitPredictionType.ActionProbabilities, learner); ;
+                        }
+                        else
+                        {
+                            learnersHist2++;
+                            goodScores = ex2.Predict(VowpalWabbitPredictionType.ActionProbabilities, learner2); ;
+                        }
 
-                        var goodScores = learner.PerformanceStatistics.AverageLoss < learner2.PerformanceStatistics.AverageLoss ? scores : scores2;
                         var total = 0.0;
                         foreach (var actionScore in goodScores)
                         {
@@ -166,9 +177,15 @@ namespace simulator
                         var oneStepAheadScores = ex.Learn(VowpalWabbitPredictionType.ActionProbabilities, learner);
                         var oneStepAheadScores2 = ex2.Learn(VowpalWabbitPredictionType.ActionProbabilities, learner2);
 
+                        // SNIPS
+                        snips_num1 -= oneStepAheadScores.First(f => f.Action == topAction).Score * cost / scorerPdf[topAction];
+                        snips_num2 -= oneStepAheadScores2.First(f => f.Action == topAction).Score * cost / scorerPdf[topAction];
+                        snips_den1 += oneStepAheadScores.First(f => f.Action == topAction).Score / scorerPdf[topAction];
+                        snips_den2 += oneStepAheadScores2.First(f => f.Action == topAction).Score / scorerPdf[topAction];
+
                         if (iter % mod_iter == 0 || iter == tot_iter)
                         {
-                            Console.WriteLine("{0},{1},{2},{3}", iter, clicks/(float)iter, goodActions, goodActionsSinceLast);
+                            Console.WriteLine("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11}", iter, clicks / (float)iter, goodActions, goodActionsSinceLast, learnersHist1, learnersHist2, snips_num1 / (double)iter, snips_num2 / (double)iter, snips_num1 / snips_den1, snips_num2 / snips_den2, snips_den1, snips_den2);
 
                             goodActionsSinceLast = 0;
 
