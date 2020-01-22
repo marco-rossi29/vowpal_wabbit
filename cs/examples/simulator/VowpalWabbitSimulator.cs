@@ -103,8 +103,8 @@ namespace simulator
             int learnersHist1 = 0, learnersHist2 = 0;
             ActionScore[] goodScores;
 
+            using (var learner2 = ml_args2 != "" ? new VowpalWabbit(ml_args2 + " --quiet") : null)
             using (var learner = new VowpalWabbit(ml_args + " --quiet"))
-            using(var learner2 = new VowpalWabbit(ml_args2 + " --quiet"))
             {
                 for (int iter = 1; iter <= tot_iter; iter++)
                 {
@@ -120,7 +120,7 @@ namespace simulator
                     var simExample = simExamples[contextIndex];
                     var costPdf = simExample.PDF;
 
-                    using (var ex2 = simExample.CreateExample(learner2))
+                    using (var ex2 = ml_args2 != "" ? simExample.CreateExample(learner2) : null)
                     using (var ex = simExample.CreateExample(learner))
                     {
                         // using snips estimates
@@ -171,17 +171,20 @@ namespace simulator
                             cost = noClickCost;
 
                         ex.Examples[topAction].Label = new ContextualBanditLabel(topAction, cost, scorerPdf[topAction]);
-                        ex2.Examples[topAction].Label = new ContextualBanditLabel(topAction, cost, scorerPdf[topAction]);
-
                         // invoke learning
                         var oneStepAheadScores = ex.Learn(VowpalWabbitPredictionType.ActionProbabilities, learner);
-                        var oneStepAheadScores2 = ex2.Learn(VowpalWabbitPredictionType.ActionProbabilities, learner2);
 
                         // SNIPS
                         snips_num1 -= oneStepAheadScores.First(f => f.Action == topAction).Score * cost / scorerPdf[topAction];
-                        snips_num2 -= oneStepAheadScores2.First(f => f.Action == topAction).Score * cost / scorerPdf[topAction];
                         snips_den1 += oneStepAheadScores.First(f => f.Action == topAction).Score / scorerPdf[topAction];
-                        snips_den2 += oneStepAheadScores2.First(f => f.Action == topAction).Score / scorerPdf[topAction];
+
+                        if(ml_args2 != "")
+                        {
+                            ex2.Examples[topAction].Label = new ContextualBanditLabel(topAction, cost, scorerPdf[topAction]);
+                            var oneStepAheadScores2 = ex2.Learn(VowpalWabbitPredictionType.ActionProbabilities, learner2);
+                            snips_num2 -= oneStepAheadScores2.First(f => f.Action == topAction).Score * cost / scorerPdf[topAction];
+                            snips_den2 += oneStepAheadScores2.First(f => f.Action == topAction).Score / scorerPdf[topAction];
+                        }
 
                         if (iter % mod_iter == 0 || iter == tot_iter)
                         {
