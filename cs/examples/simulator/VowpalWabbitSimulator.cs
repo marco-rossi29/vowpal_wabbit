@@ -89,6 +89,7 @@ namespace simulator
             var exampleBuffer = new byte[32 * 1024];
 
             var randGen = new Random(rnd_seed);
+            var randGen2 = new Random(rnd_seed+100);
 
             var simExamples = Enumerable.Range(0, numContexts)
                 .Select(i => new SimulatorExample(numActions, i, i, minP, maxP))
@@ -124,15 +125,15 @@ namespace simulator
                     using (var ex = simExample.CreateExample(learner))
                     {
                         // using snips estimates
-                        if(snips_num1 * snips_den2 >= snips_num2 * snips_den1)
+                        if(ml_args2 == "" || (iter < 100000 && randGen2.NextDouble() < 0.5) || (iter >= 100000 && snips_num1 * snips_den2 >= snips_num2 * snips_den1))
                         {
                             learnersHist1++;
-                            goodScores = ex.Predict(VowpalWabbitPredictionType.ActionProbabilities, learner); ;
+                            goodScores = ex.Predict(VowpalWabbitPredictionType.ActionProbabilities, learner);
                         }
                         else
                         {
                             learnersHist2++;
-                            goodScores = ex2.Predict(VowpalWabbitPredictionType.ActionProbabilities, learner2); ;
+                            goodScores = ex2.Predict(VowpalWabbitPredictionType.ActionProbabilities, learner2);
                         }
 
                         var total = 0.0;
