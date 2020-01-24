@@ -125,7 +125,7 @@ namespace simulator
                     using (var ex = simExample.CreateExample(learner))
                     {
                         // using snips estimates
-                        if(ml_args2 == "" || (iter < 100000 && randGen2.NextDouble() < 0.5) || (iter >= 100000 && snips_num1 * snips_den2 >= snips_num2 * snips_den1))
+                        if(ml_args2 == "" || snips_num1 * snips_den2 >= snips_num2 * snips_den1)
                         {
                             learnersHist1++;
                             goodScores = ex.Predict(VowpalWabbitPredictionType.ActionProbabilities, learner);
