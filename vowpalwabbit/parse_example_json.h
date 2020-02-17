@@ -1491,6 +1491,12 @@ void read_line_decision_service_json(vw& all, v_array<example*>& examples, char*
   if (!result.IsError())
     return;
 
+  if (true)
+  {
+    data->skipLearn = true;
+    return;
+  }
+
   BaseState<audit>* current_state = handler.current_state();
 
   THROW("JSON parser error at " << result.Offset() << ": " << GetParseError_En(result.Code())
